@@ -4,10 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rechenrunde</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%276%27 fill=%27%232447c9%27/%3E%3Cpath d=%27M8 11h16M8 16h16M8 21h16M12 7v18M20 7v18%27 stroke=%27%23fff%27 stroke-width=%272%27 fill=%27none%27/%3E%3C/svg%3E">
 <style>
+@font-face { font-family: "Kalam"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/kalam-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Kalam"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/kalam-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Atkinson Hyperlegible"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/atkinson-hyperlegible-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Atkinson Hyperlegible"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2"); }
 /* Layout idea: Schulheft auf Kästchenpapier. Eine Ziffer pro Kästchen, Rotstift für Fehler.
    Dunkel = Schultafel mit Kreide. Kinder-Ansicht einspaltig, Lehrer-Ansicht als Übersicht. */
 :root {
@@ -27,6 +30,7 @@
   --warn-bg: #fbefcc;
   --font-display: "Kalam", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
   --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-num: var(--font-body); /* Ziffern und Rechenzeichen: eindeutig lesbar, keine Handschrift */
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -118,7 +122,7 @@ a { color: var(--accent); }
 .cell {
   position: relative; width: var(--cell); height: var(--cell); display: grid; place-items: center;
   border: 1.5px solid var(--grid-strong); background: var(--sheet); color: var(--ink);
-  font: 700 calc(var(--cell) * .66)/1 var(--font-display); padding-top: calc(var(--cell) * .06);
+  font: 700 calc(var(--cell) * .62)/1 var(--font-num);
 }
 .cell + .cell { margin-left: -1.5px; }
 .cell.gap { margin-left: calc(var(--cell) * .3); }
@@ -160,7 +164,7 @@ a { color: var(--accent); }
 .packbtn { align-items: flex-start; flex-direction: column; gap: 2px; }
 .newform { display: grid; gap: 14px; }
 .newform label, fieldset legend, .flabel { font-weight: 700; display: block; margin-bottom: 6px; padding: 0; }
-input[type="text"], input[type="url"], input[type="number"], select.field, textarea.field, .field {
+input[type="text"], input[type="url"], input[type="number"], input[type="email"], input[type="password"], select.field, textarea.field, .field {
   width: 100%; min-height: 50px; padding: 8px 14px; border: 2px solid var(--ink); border-radius: 8px;
   background: var(--sheet); color: var(--ink); font: 700 1.1rem var(--font-body);
 }
@@ -198,17 +202,17 @@ fieldset { border: 0; padding: 0; margin: 0 0 20px; min-width: 0; }
 .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 360px; margin: 6px auto 0; }
 .key {
   min-height: clamp(54px, 9vh, 70px); border-radius: 10px; border: 2px solid var(--ink); background: var(--sheet); color: var(--ink);
-  font: 700 1.8rem/1 var(--font-display); cursor: pointer; box-shadow: 0 3px 0 var(--ink); padding-top: 4px;
+  font: 700 1.8rem/1 var(--font-num); cursor: pointer; box-shadow: 0 3px 0 var(--ink);
 }
 .key:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
 .key:disabled { opacity: .4; box-shadow: none; cursor: default; }
 .key.okkey { background: var(--accent); color: var(--on-accent); font-family: var(--font-body); font-size: 1.25rem; }
 
-.score { font: 700 3.2rem/1 var(--font-display); margin: 6px 0 4px; }
+.score { font: 700 3.2rem/1 var(--font-num); margin: 6px 0 4px; }
 .score small { font-size: 1.4rem; color: var(--ink-soft); }
 .page { margin: 18px 0; padding: 14px 16px; }
 .page ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 4px 20px; }
-.page li { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; border-bottom: 1px dashed var(--grid-strong); font: 700 1.25rem var(--font-display); }
+.page li { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; border-bottom: 1px dashed var(--grid-strong); font: 700 1.2rem var(--font-num); }
 .page li .mark { margin-left: auto; font: 700 1.2rem var(--font-body); }
 .page li.ok .mark { color: var(--good); }
 .page li.bad .mark { color: var(--bad); }
@@ -244,7 +248,7 @@ del { color: var(--bad); text-decoration-thickness: 3px; }
 .fgrid { display: grid; gap: 4px; }
 .row2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px 20px; margin-bottom: 18px; }
 .prev { list-style: none; margin: 8px 0 12px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; max-height: 190px; overflow: auto; }
-.prev li { padding: 2px 10px; border: 1px solid var(--grid-strong); border-radius: 6px; background: var(--paper); font: 700 1.05rem var(--font-display); }
+.prev li { padding: 2px 10px; border: 1px solid var(--grid-strong); border-radius: 6px; background: var(--paper); font: 700 1rem var(--font-num); }
 .filters { display: flex; gap: 14px 24px; flex-wrap: wrap; align-items: flex-end; }
 .filters .fld { display: grid; gap: 4px; min-width: 190px; flex: 1 1 190px; max-width: 320px; }
 .filters .fld label { font-weight: 700; font-size: .9rem; color: var(--ink-soft); }
@@ -263,7 +267,7 @@ del { color: var(--bad); text-decoration-thickness: 3px; }
 .band { display: grid; grid-template-columns: repeat(4, 1fr); }
 .band > div { padding: 4px 16px; border-left: 2px dashed var(--grid-strong); }
 .band > div:first-child { border-left: 0; padding-left: 0; }
-.band b { display: block; font: 700 2.1rem/1.1 var(--font-display); }
+.band b { display: block; font: 700 2rem/1.1 var(--font-num); }
 .band span { color: var(--ink-soft); font-size: .9rem; }
 .stack { display: grid; gap: 18px; align-content: start; }
 .cols { display: grid; align-items: start; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
@@ -302,7 +306,7 @@ details.tview summary { cursor: pointer; font-weight: 700; color: var(--accent);
 .tip span { color: var(--ink-soft); font-size: .85rem; }
 .emap { display: grid; grid-template-columns: 22px repeat(9, minmax(0, 1fr)); gap: 3px; max-width: 440px; }
 .emap > * { aspect-ratio: 1; display: grid; place-items: center; font-size: .78rem; border-radius: 3px; position: relative; }
-.emap .hd { aspect-ratio: auto; font: 700 .95rem var(--font-display); color: var(--ink-soft); }
+.emap .hd { aspect-ratio: auto; font: 700 .9rem var(--font-num); color: var(--ink-soft); }
 .emap .c { border: 1px solid var(--grid-strong); background: var(--sheet); color: var(--ink-soft); }
 .emap .c.sure { background: var(--good-bg); border-color: var(--good); color: var(--good); font-weight: 700; }
 .emap .c.mid { background: var(--warn-bg); border-color: var(--warn); color: var(--warn); font-weight: 700; }
@@ -316,11 +320,11 @@ details.tview summary { cursor: pointer; font-weight: 700; color: var(--accent);
 .legend .low i { background: var(--bad-bg); border-color: var(--bad); }
 .tricky { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .tricky li { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding: 6px 0; border-bottom: 1px dashed var(--grid-strong); }
-.tricky .ex { font: 700 1.25rem var(--font-display); }
+.tricky .ex { font: 700 1.15rem var(--font-num); }
 .tricky .why { color: var(--ink-soft); font-size: .92rem; }
 .opsrow { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 4px 14px; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--grid-strong); }
 .opsrow:last-child { border-bottom: 0; }
-.opsrow .lbl { font: 700 1.2rem var(--font-display); display: flex; gap: 8px; align-items: baseline; }
+.opsrow .lbl { font: 700 1.1rem var(--font-num); display: flex; gap: 8px; align-items: baseline; }
 .opsrow .lbl b { color: var(--accent); font-size: 1.6rem; width: 1.2ch; text-align: center; }
 .opsrow .nfo { grid-column: 2; font-size: .9rem; color: var(--ink-soft); }
 .bar { height: 14px; border-radius: 3px; background: var(--grid); border: 1.5px solid var(--grid-strong); overflow: hidden; }
@@ -333,12 +337,12 @@ details.round > summary::-webkit-details-marker { display: none; }
 details.round .who { display: flex; flex-direction: column; min-width: 0; }
 details.round .who b { font: 700 1.2rem/1.1 var(--font-display); }
 details.round .who span { font-size: .88rem; color: var(--ink-soft); }
-details.round .sc { display: block; text-align: right; font: 700 1.5rem/1 var(--font-display); }
+details.round .sc { display: block; text-align: right; font: 700 1.4rem/1 var(--font-num); }
 details.round .sc small { display: block; font: 400 .8rem var(--font-body); color: var(--ink-soft); margin-top: 2px; }
 details.round .body { padding: 4px 16px 16px; border-top: 1px dashed var(--grid-strong); }
 .tasks { list-style: none; margin: 8px 0 12px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 2px 24px; }
 .tasks li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: baseline; padding: 5px 0; border-bottom: 1px dashed var(--grid-strong); }
-.tasks .ex { font: 700 1.15rem var(--font-display); }
+.tasks .ex { font: 700 1.1rem var(--font-num); }
 .tasks .mk { font-weight: 700; }
 .tasks li.ok .mk { color: var(--good); } .tasks li.bad .mk { color: var(--bad); }
 .tasks .tm { color: var(--ink-soft); font-size: .88rem; min-width: 4.5ch; text-align: right; }
@@ -358,6 +362,10 @@ details.round .body { padding: 4px 16px 16px; border-top: 1px dashed var(--grid-
 .qrbig .code { width: min(80vw, 70vh, 560px); aspect-ratio: 1; background: #fff; border: 2px solid var(--ink); border-radius: 8px; padding: 10px; }
 .qrbig .code svg { width: 100%; height: 100%; display: block; }
 
+.login { max-width: 460px; margin: 26px auto 0; }
+.login h1 { font-size: 2rem; margin-bottom: 6px; }
+.login .lead { color: var(--ink-soft); margin-bottom: 16px; }
+.login .err { color: var(--bad); font-weight: 700; }
 @media (max-width: 760px) {
   .cols { grid-template-columns: minmax(0, 1fr); }
   .band { grid-template-columns: repeat(2, 1fr); row-gap: 14px; }
@@ -376,13 +384,15 @@ details.round .body { padding: 4px 16px 16px; border-top: 1px dashed var(--grid-
 <div class="tip" id="tip" role="tooltip" hidden></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="config.js"></script>
 <script>
 (function () {
 'use strict';
 
 /* ---------- Konstanten und Hilfen ---------- */
-const APP_URL = 'https://claude.ai/artifact/NShNvWCETHEkrRa9DfJDik';
+const CFG = window.RECHENRUNDE_CONFIG || {};
 const COLORS = ['#2f5bd8', '#c4412f', '#1f8a5b', '#b45f06', '#7a4bc4', '#0f8a96'];
 const OPS = ['+', '-', '*', '/'];
 const SYM = { '+': '+', '-': '−', '*': '·', '/': ':' };
@@ -405,8 +415,6 @@ const safeColor = c => COLORS.includes(c) ? c : COLORS[0];
 const hasOp = o => Object.prototype.hasOwnProperty.call(SYM, o);
 const isOk = t => t.given === t.answer;
 const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
-const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignorieren */ } };
 const fmtN = n => { n = String(n); return n.length >= 5 ? n.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : n; };
 const rangeLabel = r => 'bis ' + fmtN(r);
 const fmtSec = ms => (ms / 1000).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' s';
@@ -480,118 +488,181 @@ function makeTasks(mode, R, rounded, n) {
   return shuffle(out);
 }
 
-/* ---------- Datenbank ---------- */
-let db = null, canWrite = true, dbStatus = 'pending';
-const store = { kids: new Map(), kidsLoaded: false, kidsState: 'loading', packs: new Map(), packsLoaded: false, packsState: 'loading', sessions: [], sessLoaded: false, sessState: 'loading' };
-
-const dbReady = (async function () {
-  try {
-    const cl = window.claude;
-    if (!cl || typeof cl.use !== 'function') { dbStatus = 'none'; return; }
-    db = await cl.use('db');
-    dbStatus = db ? 'ready' : 'none';
-    if (db) {
-      try {
-        const u = await cl.use('user');
-        if (u && typeof u.can === 'function') { const w = await u.can('data.write'); if (w === false) canWrite = false; }
-      } catch (e) { /* unbekannt: Schreiben versuchen */ }
-    }
-  } catch (e) { dbStatus = 'none'; }
-  updateConn();
-  if (mode === 'kind') kidDataChanged();
-})();
-
-function listen(query, onData, onState) {
-  let got = false;
-  const timer = setTimeout(() => { if (!got) onState('slow'); }, 10000);
-  const un = query.onSnapshot(snap => {
-    if (!snap.metadata.fromCache) { got = true; clearTimeout(timer); onState('live'); }
-    onData(snap);
-  }, () => { clearTimeout(timer); onState('error'); });
-  return () => { clearTimeout(timer); un(); };
+/* ---------- Datenbank (Supabase) ---------- */
+const store = { kids: new Map(), kidsLoaded: false, packs: new Map(), packsLoaded: false, sessMap: new Map(), sessions: [], sessLoaded: false, net: 'wait' };
+const SESS_LIMIT = 1000;
+let dbStatus = (window.supabase && typeof window.supabase.createClient === 'function' && /^(https:\/\/|http:\/\/localhost)\S+$/.test(CFG.supabaseUrl || '') && String(CFG.supabaseKey || '').length > 20) ? 'ready' : 'none';
+const clients = {};
+let sb = null;
+function client(teacher) {
+  const k = teacher ? 't' : 'k';
+  if (!clients[k]) clients[k] = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, {
+    auth: { persistSession: teacher, autoRefreshToken: teacher, detectSessionInUrl: false, storageKey: teacher ? 'rechenrunde-lehrer' : 'rechenrunde-kind' }
+  });
+  return clients[k];
 }
-const normKid = (id, d) => (d && typeof d === 'object') ? { id, name: String(d.name || '?').slice(0, 14), color: safeColor(d.color), createdAt: +d.createdAt || 0 } : null;
-const normTask = t => (t && typeof t === 'object' && hasOp(t.op)) ? { op: t.op, a: +t.a || 0, b: +t.b || 0, answer: +t.answer || 0, given: Number.isFinite(+t.given) ? +t.given : NaN, ms: Math.max(0, +t.ms || 0) } : null;
-function normPack(id, d) {
-  if (!d || typeof d !== 'object') return null;
+function uuid() {
+  if (window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const b = new Uint8Array(16); crypto.getRandomValues(b); b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+  const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+  return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+}
+const tsOf = v => { const t = Date.parse(v); return Number.isFinite(t) ? t : 0; };
+const normKid = d => (d && d.id) ? { id: String(d.id), name: String(d.name || '?').slice(0, 14), color: safeColor(d.color), createdAt: tsOf(d.created_at) } : null;
+const normTask = t => (t && typeof t === 'object' && hasOp(t.op)) ? { op: t.op, a: +t.a || 0, b: +t.b || 0, answer: +t.answer || 0, given: Number.isFinite(+t.given) && t.given !== null ? +t.given : NaN, ms: Math.max(0, +t.ms || 0) } : null;
+function normPack(d) {
+  if (!d || !d.id) return null;
   const tasks = (Array.isArray(d.tasks) ? d.tasks : []).slice(0, 100).map(normTask).filter(Boolean).map(t => ({ op: t.op, a: t.a, b: t.b, answer: t.answer }));
   if (!tasks.length) return null;
   return {
-    id, title: String(d.title || 'Päckchen').slice(0, 40), mode: MODES[d.mode] ? d.mode : 'mix', range: RANGES.includes(+d.range) ? +d.range : 100,
-    rounded: !!d.rounded, limitMin: Math.max(0, Math.min(180, Math.round(+d.limitMin || 0))), archived: !!d.archived, createdAt: +d.createdAt || 0, tasks
+    id: String(d.id), title: String(d.title || 'Päckchen').slice(0, 40), mode: MODES[d.mode] ? d.mode : 'mix', range: RANGES.includes(+d.range_max) ? +d.range_max : 100,
+    rounded: !!d.rounded, limitMin: Math.max(0, Math.min(180, Math.round(+d.limit_min || 0))), archived: !!d.archived, createdAt: tsOf(d.created_at), tasks
   };
 }
-function normSession(id, d) {
-  if (!d || typeof d !== 'object') return null;
+function normSession(d) {
+  if (!d || !d.id) return null;
   const tasks = (Array.isArray(d.tasks) ? d.tasks : []).slice(0, 100).map(normTask).filter(Boolean);
+  const started = tsOf(d.started_at);
   return {
-    id, kidId: String(d.kidId || ''), kidName: String(d.kidName || '?').slice(0, 30), kidColor: safeColor(d.kidColor),
-    packId: /^[a-z0-9]{3,40}$/.test(String(d.packId || '')) ? String(d.packId) : '', packTitle: String(d.packTitle || '').slice(0, 40),
-    startedAt: +d.startedAt || 0, updatedAt: +d.updatedAt || +d.startedAt || 0,
-    ops: (Array.isArray(d.ops) ? d.ops : []).filter(hasOp), range: RANGES.includes(+d.range) ? +d.range : 100,
-    total: Math.min(100, +d.total || tasks.length), done: !!d.done, timedOut: !!d.timedOut, elapsedMs: Math.max(0, +d.elapsedMs || 0),
-    limitMin: Math.max(0, +d.limitMin || 0), tasks
+    id: String(d.id), kidId: String(d.kid_id || ''), packId: String(d.pack_id || ''), startedAt: started, updatedAt: tsOf(d.updated_at) || started, seenAt: 0,
+    total: Math.min(100, +d.total || tasks.length), done: !!d.done, timedOut: !!d.timed_out, elapsedMs: Math.max(0, +d.elapsed_ms || 0), limitMin: Math.max(0, +d.limit_min || 0), tasks,
+    kidName: '?', kidColor: COLORS[0], packTitle: '', ops: [], range: 100
   };
+}
+function decorate(s) {
+  const k = store.kids.get(s.kidId), p = store.packs.get(s.packId);
+  if (k) { s.kidName = k.name; s.kidColor = k.color; }
+  if (p) { s.packTitle = p.title; s.range = p.range; s.ops = [...new Set(p.tasks.map(t => t.op))]; }
+  return s;
 }
 const correctOf = s => s.tasks.filter(isOk).length;
 const totalOf = s => s.total || s.tasks.length;
 const pctOf = s => Math.round(100 * correctOf(s) / Math.max(1, totalOf(s)));
 const elapsedOf = s => s.elapsedMs || s.tasks.reduce((a, t) => a + t.ms, 0);
+function rebuildSessions() { store.sessions = [...store.sessMap.values()].sort((a, b) => b.startedAt - a.startedAt).slice(0, SESS_LIMIT); }
+function setNet(n) { store.net = n; updateConn(); }
 
-function subscribeKids(after) {
-  dbReady.then(() => {
-    if (!db) { store.kidsLoaded = true; after(); return; }
-    unsubs.push(listen(db.collection('kids').orderBy('createdAt'), snap => {
-      store.kids = new Map();
-      snap.docs.forEach(d => { const k = normKid(d.id, d.data()); if (k) store.kids.set(k.id, k); });
-      store.kidsLoaded = true; after();
-    }, st => { store.kidsState = st; after(); }));
-  });
-}
-function subscribePacks(after) {
-  dbReady.then(() => {
-    if (!db) { store.packsLoaded = true; after(); return; }
-    unsubs.push(listen(db.collection('packs').orderBy('createdAt', 'desc').limit(100), snap => {
-      store.packs = new Map();
-      snap.docs.forEach(d => { const p = normPack(d.id, d.data()); if (p) store.packs.set(p.id, p); });
-      store.packsLoaded = true; after();
-    }, st => { store.packsState = st; after(); }));
-  });
-}
-function subscribeSessions(after) {
-  dbReady.then(() => {
-    if (!db) { store.sessLoaded = true; after(); return; }
-    unsubs.push(listen(db.collection('sessions').orderBy('startedAt', 'desc').limit(1000), snap => {
-      store.sessions = snap.docs.map(d => normSession(d.id, d.data())).filter(Boolean);
-      store.sessCount = snap.size; store.sessLoaded = true; after();
-    }, st => { store.sessState = st; after(); }));
-  });
+const isFatal = e => { const c = String((e && e.code) || ''); return /^(22|23|42|P0|PGRST)/.test(c) || (!!e && e.status >= 400 && e.status < 500 && e.status !== 408 && e.status !== 429); };
+async function dbCall(fn) {
+  let error = null;
+  for (let i = 0; i < 3; i++) {
+    try {
+      const r = await fn();
+      if (!r.error) return { ok: true, data: r.data };
+      error = r.error;
+    } catch (e) { error = e; }
+    if (isFatal(error)) return { ok: false, error, fatal: true };
+    await sleep(600 + Math.random() * 500);
+  }
+  return { ok: false, error, fatal: false };
 }
 async function dbWrite(fn) {
-  for (let i = 0; i < 3; i++) {
-    try { await fn(); return true; }
-    catch (e) {
-      const c = e && e.code;
-      if (c === 'invalid_argument') { canWrite = false; updateConn(); return false; }
-      if (c === 'quota_exceeded') { toast('Der Speicher ist voll. Bitte alte Päckchen löschen.'); return false; }
-      await sleep(c === 'resource_exhausted' ? 2000 : 700 + Math.random() * 500);
-    }
+  const r = await dbCall(fn);
+  if (!r.ok && r.error && /JWT|expired|row-level security|42501|permission/i.test(String(r.error.message || '') + String(r.error.code || ''))) toast('Keine Berechtigung. Bitte melde dich neu an.');
+  return r.ok;
+}
+
+/* Kinder: Namen und Päckchen laden (ohne Anmeldung) */
+let dataTimer = null;
+async function loadKidData() {
+  if (dbStatus !== 'ready' || mode !== 'kind' || !sb) return;
+  const token = routeToken;
+  try {
+    const [k, p] = await Promise.all([
+      sb.from('kids').select('id,name,color,created_at').order('created_at'),
+      sb.from('packs').select('*').order('created_at', { ascending: false }).limit(100)
+    ]);
+    if (k.error) throw k.error;
+    if (p.error) throw p.error;
+    if (token !== routeToken) return;
+    store.kids = new Map(); (k.data || []).forEach(d => { const x = normKid(d); if (x) store.kids.set(x.id, x); });
+    store.packs = new Map(); (p.data || []).forEach(d => { const x = normPack(d); if (x) store.packs.set(x.id, x); });
+    store.kidsLoaded = store.packsLoaded = true; store.net = 'ok';
+  } catch (e) {
+    if (token !== routeToken) return;
+    store.net = 'err';
   }
-  return false;
+  kidDataChanged();
+}
+
+/* Lehrkraft: alles laden und live aktualisieren */
+async function loadAll() {
+  if (!sb) return;
+  const token = routeToken;
+  try {
+    const [k, p, s] = await Promise.all([
+      sb.from('kids').select('id,name,color,created_at').order('created_at'),
+      sb.from('packs').select('*').order('created_at', { ascending: false }).limit(100),
+      sb.from('sessions').select('*').order('started_at', { ascending: false }).limit(SESS_LIMIT)
+    ]);
+    if (k.error) throw k.error;
+    if (p.error) throw p.error;
+    if (s.error) throw s.error;
+    if (token !== routeToken || A.state !== 'in') return;
+    store.kids = new Map(); (k.data || []).forEach(d => { const x = normKid(d); if (x) store.kids.set(x.id, x); });
+    store.packs = new Map(); (p.data || []).forEach(d => { const x = normPack(d); if (x) store.packs.set(x.id, x); });
+    const old = store.sessMap; store.sessMap = new Map();
+    (s.data || []).forEach(d => { const x = normSession(d); if (x) { const prev = old.get(x.id); x.seenAt = prev ? prev.seenAt : 0; store.sessMap.set(x.id, x); } });
+    rebuildSessions();
+    store.kidsLoaded = store.packsLoaded = store.sessLoaded = true;
+    setNet('ok');
+  } catch (e) {
+    if (token === routeToken) setNet('err');
+  }
+  refreshTeacher();
+}
+function refreshTeacher() {
+  if (mode !== 'lehrer' || A.state !== 'in') return;
+  renderPacks(); renderFilters(); renderLive(); renderManageList();
+}
+let liveCh = null, refreshTimer = null;
+function scheduleRefresh() { clearTimeout(refreshTimer); refreshTimer = setTimeout(refreshTeacher, 500); }
+function applyChange(table, p) {
+  const type = p.eventType, row = type === 'DELETE' ? p.old : p.new;
+  if (!row || !row.id) return;
+  const id = String(row.id);
+  if (table === 'sessions') {
+    if (type === 'DELETE') store.sessMap.delete(id);
+    else { const x = normSession(row); if (x) { x.seenAt = Date.now(); store.sessMap.set(x.id, x); } }
+    rebuildSessions();
+  } else if (table === 'kids') {
+    if (type === 'DELETE') store.kids.delete(id); else { const x = normKid(row); if (x) store.kids.set(x.id, x); }
+  } else if (table === 'packs') {
+    if (type === 'DELETE') store.packs.delete(id); else { const x = normPack(row); if (x) store.packs.set(x.id, x); }
+  }
+  scheduleRefresh();
+}
+function startLive() {
+  stopLive();
+  const ch = sb.channel('rr-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'sessions' }, p => applyChange('sessions', p))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'kids' }, p => applyChange('kids', p))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'packs' }, p => applyChange('packs', p))
+    .subscribe(status => {
+      if (ch !== liveCh) return;
+      if (status === 'SUBSCRIBED') loadAll();
+      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') setNet('err');
+    });
+  liveCh = ch;
+}
+function stopLive() {
+  clearTimeout(refreshTimer);
+  const ch = liveCh; liveCh = null;
+  if (ch && sb) { try { sb.removeChannel(ch); } catch (e) { /* ignorieren */ } }
 }
 
 /* ---------- Anzeige-Grundlagen ---------- */
-let mode = null, route = { m: null, pack: null }, unsubs = [], tick = null;
+let mode = null, route = { m: null, pack: null }, tick = null, routeToken = 0;
 function setApp(html) {
   const a = document.activeElement, fk = a && a.dataset ? a.dataset.fk : null;
   $('#app').innerHTML = html;
   if (fk) { const el = $('#app [data-fk="' + fk.replace(/"/g, '') + '"]'); if (el && !el.disabled) el.focus({ preventScroll: true }); }
 }
 function connInfo() {
-  if (dbStatus === 'pending') return { t: 'Verbinde …', c: 'wait' };
-  if (dbStatus === 'none') return { t: 'Nicht verbunden', c: 'off', long: 'Dieses Gerät ist nicht verbunden. Die Ergebnisse gehen nicht an die Lehrkraft.' };
-  if (!canWrite) return { t: 'Nur ansehen', c: 'off', long: 'Dieses Gerät darf nichts speichern. Die Ergebnisse gehen nicht an die Lehrkraft.' };
-  if (K.saveState === 'err') return { t: 'Speichern klappt nicht', c: 'err', long: 'Das Speichern klappt gerade nicht. Du kannst trotzdem weiterrechnen.' };
+  if (dbStatus === 'none') return { t: 'Nicht eingerichtet', c: 'off', long: 'Die App ist noch nicht eingerichtet. Bitte sag deiner Lehrkraft Bescheid.' };
+  if (mode === 'kind' && K.saveState === 'err') return { t: 'Speichern klappt nicht', c: 'err', long: 'Das Speichern klappt gerade nicht. Du kannst trotzdem weiterrechnen. Die App versucht es weiter.' };
+  if (store.net === 'err') return { t: 'Keine Verbindung', c: 'err', long: mode === 'kind' ? 'Keine Verbindung zum Server. Prüfe das WLAN.' : '' };
+  if (store.net === 'wait') return { t: 'Verbinde …', c: 'wait' };
   return { t: 'Verbunden', c: 'ok' };
 }
 function updateConn() {
@@ -604,9 +675,10 @@ function renderTop() {
   const c = connInfo();
   let right = '';
   if (mode === 'kind' && K.kid) right += '<button class="link" data-act="switch">Spieler wechseln</button>';
-  if (mode === 'lehrer') right += '<a class="link" href="#" data-go="start">Start</a>';
+  if (mode === 'lehrer') right += '<a class="link" href="#" data-go="start">Start</a>' + (A.state === 'in' ? '<button class="link" data-act="logout">Abmelden</button>' : '');
+  const pill = (mode === 'kind' || (mode === 'lehrer' && A.state === 'in')) ? '<span class="conn ' + c.c + '" id="conn"><i></i><span>' + esc(c.t) + '</span></span>' : '';
   $('#top').innerHTML = (mode === 'kind' ? '<span class="brand">Rechenrunde</span>' : '<a class="brand" href="#" data-go="start">Rechenrunde</a>') +
-    '<div class="topr"><span class="conn ' + c.c + '" id="conn"><i></i><span>' + esc(c.t) + '</span></span>' + right + '</div>';
+    '<div class="topr">' + pill + right + '</div>';
 }
 function parseHash(h) {
   h = String(h).replace('#', '');
@@ -621,20 +693,21 @@ function go(h) {
 }
 function setRoute(r) {
   if (route.m === r.m && route.pack === r.pack) return;
-  unsubs.forEach(u => u()); unsubs = [];
+  routeToken++;
+  stopLive(); clearInterval(dataTimer); dataTimer = null;
   clearTimeout(K.fbTimer); stopClock(); clearInterval(tick); tick = null; closeBig();
-  route = r; mode = r.m; renderTop();
+  route = r; mode = r.m; store.net = 'wait';
   document.title = mode === 'lehrer' ? 'Rechenrunde · Lehrer' : 'Rechenrunde';
   if (mode === 'kind') {
-    resetKid(); K.gate = kidGate(); renderKid();
-    subscribeKids(kidDataChanged); subscribePacks(kidDataChanged);
+    store.kidsLoaded = store.packsLoaded = false;
+    resetKid(); sb = dbStatus === 'ready' ? client(false) : null;
+    renderTop(); K.gate = kidGate(); renderKid();
+    loadKidData();
+    dataTimer = setInterval(() => { if (K.screen === 'pick' || K.screen === 'ready') loadKidData(); }, 45000);
   } else if (mode === 'lehrer') {
-    mountTeacher();
-    subscribeKids(() => { renderFilters(); renderLive(); renderManageList(); });
-    subscribePacks(() => { renderPacks(); renderFilters(); renderLive(); });
-    subscribeSessions(() => { renderPacks(); renderLive(); });
-    tick = setInterval(renderLive, 30000);
-  } else renderStart();
+    renderTop(); bootTeacher();
+    tick = setInterval(() => { if (A.state === 'in') renderLive(); }, 30000);
+  } else { renderTop(); renderStart(); }
   window.scrollTo(0, 0);
 }
 
@@ -651,17 +724,16 @@ function renderStart() {
 /* ---------- Kinder-Ansicht ---------- */
 const K = {
   gate: 'loading', screen: 'pick', pack: null, kid: null, history: [], histState: 'idle', tasks: [], idx: 0, input: '', phase: 'ask',
-  results: [], shownAt: 0, startedAt: 0, limitMs: 0, session: null, q: null, saveState: 'idle', showNew: false, newColor: COLORS[0],
+  results: [], shownAt: 0, startedAt: 0, limitMs: 0, session: null, q: null, saveState: 'idle',
   fbTimer: null, clockTimer: null, praise: 0, prev: null, cur: null
 };
 function resetKid() {
   clearTimeout(K.fbTimer); stopClock();
-  K.screen = 'pick'; K.kid = null; K.pack = null; K.showNew = false; K.q = null; K.session = null; K.saveState = 'idle'; K.history = []; K.histState = 'idle';
+  K.screen = 'pick'; K.kid = null; K.pack = null; K.q = null; K.session = null; K.saveState = 'idle'; K.history = []; K.histState = 'idle';
 }
 function kidGate() {
   if (dbStatus === 'none') return 'none';
-  if (dbStatus === 'pending') return 'loading';
-  if (!store.packsLoaded) return (store.packsState === 'error' || store.packsState === 'slow') ? 'err' : 'loading';
+  if (!store.packsLoaded) return store.net === 'err' ? 'err' : 'loading';
   if (!route.pack) return [...store.packs.values()].some(p => !p.archived) ? 'list' : 'empty';
   const p = store.packs.get(route.pack);
   return (!p || p.archived) ? 'gone' : 'ok';
@@ -690,7 +762,7 @@ function renderKid() {
 function gateHtml(g) {
   const wrap = h => '<section class="kid"><div class="notice" id="notice" role="status" hidden></div>' + h + '</section>';
   if (g === 'loading') return wrap('<h1 class="h">Einen Moment …</h1><p class="lead">Das Päckchen wird geladen.</p>');
-  if (g === 'none') return wrap('<h1 class="h">Nicht verbunden</h1><p class="lead">Dieses Gerät hat keinen Zugriff auf die Päckchen. Bitte frag deine Lehrkraft.</p>');
+  if (g === 'none') return wrap('<h1 class="h">Nicht verbunden</h1><p class="lead">Die App ist noch nicht eingerichtet. Bitte sag deiner Lehrkraft Bescheid.</p>');
   if (g === 'err') return wrap('<h1 class="h">Das Päckchen lädt nicht</h1><p class="lead">Bitte lade die Seite neu. Wenn es wieder nicht klappt, frag deine Lehrkraft.</p>');
   if (g === 'gone') return wrap('<h1 class="h">Dieses Päckchen ist beendet</h1><p class="lead">Frag deine Lehrkraft nach dem neuen QR-Code.</p>');
   if (g === 'empty') return wrap('<h1 class="h">Noch kein Päckchen da</h1><p class="lead">Deine Lehrkraft hat noch kein Päckchen angelegt. Bitte frag sie nach dem QR-Code.</p>');
@@ -699,27 +771,18 @@ function gateHtml(g) {
 }
 function kidListHtml() {
   if (dbStatus === 'none') return '';
-  if (!store.kidsLoaded) return '<p class="muted" style="margin-bottom:16px">' + (store.kidsState === 'slow' ? 'Die Namen lassen sich gerade nicht laden.' : 'Lade Namen …') + '</p>';
+  if (!store.kidsLoaded) return '<p class="muted" style="margin-bottom:16px">Lade Namen …</p>';
   const ks = [...store.kids.values()].sort((a, b) => a.name.localeCompare(b.name, 'de'));
-  if (!ks.length) return '';
+  if (!ks.length) return '<div class="panel hint"><p><b>Hier steht noch kein Name.</b></p><p class="muted">Deine Lehrkraft muss dich zuerst anlegen. Sag ihr Bescheid.</p></div>';
   return '<ul class="kids">' + ks.map(k => '<li><button class="kidbtn" data-act="pick" data-id="' + esc(k.id) + '">' + badge(k.name, k.color) + '<span>' + esc(k.name) + '</span></button></li>').join('') + '</ul>';
 }
 function renderKidListOnly() {
   if (mode !== 'kind' || K.screen !== 'pick' || K.gate !== 'ok') return;
   const el = $('#kidlist');
-  if (!el) return;
-  el.innerHTML = kidListHtml();
-  if ((store.kidsLoaded || dbStatus === 'none') && !store.kids.size && !K.showNew) { K.showNew = true; renderKid(); }
+  if (el) el.innerHTML = kidListHtml();
 }
 function pickHtml() {
-  const noKids = (store.kidsLoaded || dbStatus === 'none') && !store.kids.size;
-  const showForm = K.showNew || noKids;
-  const form = showForm
-    ? '<form class="newform panel" id="newform"><div><label for="newname">Wie heißt du? (Vorname oder Kürzel)</label><input type="text" id="newname" maxlength="14" autocomplete="off" autocapitalize="words" required></div>' +
-      '<fieldset><legend>Deine Farbe</legend><div class="swatches">' + COLORS.map((c, i) => '<button type="button" class="swatch" style="--c:' + c + '" aria-pressed="' + (K.newColor === c) + '" aria-label="Farbe ' + (i + 1) + '" data-act="color" data-c="' + c + '" data-fk="sw' + i + '"></button>').join('') + '</div></fieldset>' +
-      '<button class="btn primary big" type="submit">Los geht\'s</button></form>'
-    : '<button class="btn" data-act="newtoggle">Ich bin neu hier</button>';
-  return '<section class="kid"><div class="notice" id="notice" role="status" hidden></div><span class="packname">' + esc(K.pack.title) + '</span><h1 class="h">Wer rechnet?</h1><p class="lead">' + (store.kids.size ? 'Tippe auf deinen Namen.' : 'Leg dir einen Namen an, dann kann es losgehen.') + '</p><div id="kidlist">' + kidListHtml() + '</div>' + form + '</section>';
+  return '<section class="kid"><div class="notice" id="notice" role="status" hidden></div><span class="packname">' + esc(K.pack.title) + '</span><h1 class="h">Wer rechnet?</h1><p class="lead">Tippe auf deinen Namen.</p><div id="kidlist">' + kidListHtml() + '</div></section>';
 }
 function packMeta(p) {
   return MODES[p.mode].label + ' · ' + rangeLabel(p.range) + ' · ' + p.tasks.length + ' Aufgaben · ' + (p.limitMin ? p.limitMin + ' Min.' : 'ohne Zeitlimit');
@@ -729,6 +792,7 @@ function readyHtml() {
   const p = K.pack, h = K.history, n = h.length;
   let info = '';
   if (K.histState === 'loading') info = '<div class="panel hint"><p class="muted">Lade deinen Verlauf …</p></div>';
+  else if (K.histState === 'failed') info = '<div class="panel hint"><p class="muted">Dein Verlauf lässt sich gerade nicht laden. Du kannst trotzdem rechnen.</p></div>';
   else if (n) {
     const last = h[n - 1], best = bestOf(h);
     info = '<div class="panel hint"><p>Das wird dein <b>Versuch ' + (n + 1) + '</b>.</p><p class="muted num">Letzter Versuch: ' + correctOf(last) + ' von ' + totalOf(last) + ' richtig in ' + fmtDur(elapsedOf(last)) + '.<br>Dein bestes Ergebnis: ' + correctOf(best) + ' von ' + totalOf(best) + ' richtig in ' + fmtDur(elapsedOf(best)) + '.</p></div>';
@@ -741,15 +805,16 @@ function readyHtml() {
 async function fetchHistory() {
   const kid = K.kid, pack = K.pack;
   K.history = []; K.histState = 'idle';
-  if (!db || !kid || !pack || String(kid.id).startsWith('lokal-')) return;
+  if (!sb || dbStatus !== 'ready' || !kid || !pack) return;
   K.histState = 'loading';
-  let list = [];
+  let list = [], failed = false;
   try {
-    const snap = await db.collection('sessions').where('kidId', '==', kid.id).get();
-    list = snap.docs.map(d => normSession(d.id, d.data())).filter(s => s && s.packId === pack.id && s.done && s.tasks.length).sort((a, b) => a.startedAt - b.startedAt);
-  } catch (e) { list = []; }
+    const r = await sb.rpc('kid_history', { p_kid: kid.id, p_pack: pack.id });
+    if (r.error) throw r.error;
+    list = (r.data || []).map(normSession).filter(x => x && x.done && x.tasks.length).sort((a, b) => a.startedAt - b.startedAt);
+  } catch (e) { failed = true; }
   if (K.kid !== kid) return;
-  K.history = list; K.histState = 'ready';
+  K.history = list; K.histState = failed ? 'failed' : 'ready';
   if (mode === 'kind' && K.screen === 'ready') renderKid();
 }
 
@@ -870,20 +935,19 @@ function startRound() {
   K.idx = 0; K.results = []; K.input = ''; K.phase = 'ask'; K.screen = 'play'; K.saveState = 'idle'; K.cur = null; K.prev = null;
   K.limitMs = p.limitMin * 60000; K.startedAt = now;
   K.session = {
-    kidId: K.kid.id, kidName: K.kid.name, kidColor: K.kid.color, packId: p.id, packTitle: p.title, mode: p.mode, range: p.range,
-    ops: [...new Set(p.tasks.map(t => t.op))], startedAt: now, updatedAt: now, total: K.tasks.length, limitMin: p.limitMin,
-    done: false, timedOut: false, elapsedMs: 0, finishedAt: 0, tasks: []
+    id: uuid(), kidId: K.kid.id, packId: p.id, startedAt: now, updatedAt: now, total: K.tasks.length, limitMin: p.limitMin,
+    done: false, timedOut: false, elapsedMs: 0, tasks: []
   };
-  K.q = { ref: null, data: null, running: false, dirty: false };
+  K.q = { data: null, running: false, dirty: false, retries: 0 };
   renderKid(); renderClock(); startClock(); K.shownAt = performance.now();
   queueSave();
 }
 function finishAttempt(timedOut) {
   const s = K.session, now = Date.now();
-  s.done = true; s.timedOut = timedOut; s.finishedAt = now; s.updatedAt = now;
+  s.done = true; s.timedOut = timedOut; s.updatedAt = now;
   s.elapsedMs = timedOut ? K.limitMs : Math.min(now - K.startedAt, K.limitMs || Infinity);
   K.prev = K.history.length ? K.history[K.history.length - 1] : null;
-  K.cur = normSession('lokal', s);
+  K.cur = { id: 'lokal', kidId: s.kidId, packId: s.packId, startedAt: s.startedAt, updatedAt: s.updatedAt, total: s.total, done: s.done, timedOut: s.timedOut, elapsedMs: s.elapsedMs, limitMin: s.limitMin, tasks: s.tasks.map(t => Object.assign({}, t)) };
   K.history.push(K.cur);
 }
 function timeUp() {
@@ -893,23 +957,26 @@ function timeUp() {
   K.screen = 'result'; renderKid(); $('#app').focus({ preventScroll: true });
 }
 function queueSave() {
-  const q = K.q; if (!q) return;
+  const q = K.q; if (!q || !sb) return;
   q.data = JSON.parse(JSON.stringify(K.session)); q.dirty = true;
   if (!q.running) runSave(q);
 }
 async function runSave(q) {
   q.running = true;
-  await dbReady;
-  if (!db) { K.saveState = 'off'; q.running = false; updateConn(); return; }
-  if (!canWrite) { K.saveState = 'ro'; q.running = false; updateConn(); return; }
-  if (!q.ref) q.ref = db.collection('sessions').doc();
   while (q.dirty) {
     q.dirty = false;
-    const data = q.data;
-    const ok = await dbWrite(() => q.ref.set(data));
-    if (q === K.q) K.saveState = ok ? 'ok' : (canWrite ? 'err' : 'ro');
+    const s = q.data;
+    const r = await dbCall(() => sb.rpc('save_session', {
+      p_id: s.id, p_kid: s.kidId, p_pack: s.packId, p_started: new Date(s.startedAt).toISOString(), p_total: s.total,
+      p_done: s.done, p_timed_out: s.timedOut, p_elapsed: Math.round(s.elapsedMs), p_limit: s.limitMin,
+      p_tasks: s.tasks.map(t => ({ op: t.op, a: t.a, b: t.b, answer: t.answer, given: t.given, ms: t.ms }))
+    }));
+    if (q === K.q) { K.saveState = r.ok ? 'ok' : 'err'; if (r.ok) store.net = 'ok'; }
     updateConn();
-    if (!ok && !q.dirty) break;
+    if (!r.ok && !q.dirty) {
+      if (!r.fatal && q.retries++ < 30) setTimeout(() => { q.dirty = true; if (!q.running) runSave(q); }, 6000);
+      break;
+    }
   }
   q.running = false;
 }
@@ -932,29 +999,81 @@ function next() {
   renderKid();
   if (K.screen === 'result') $('#app').focus({ preventScroll: true }); else renderClock();
 }
-async function addKid(rawName, color) {
-  const name = rawName.trim().replace(/\s+/g, ' ').slice(0, 14);
-  if (!name) return null;
-  const ex = [...store.kids.values()].find(k => k.name.toLowerCase() === name.toLowerCase());
-  if (ex) return ex;
-  await dbReady;
-  const kid = { id: 'lokal-' + Date.now(), name, color: safeColor(color), createdAt: Date.now() };
-  if (db && canWrite) {
-    const ref = db.collection('kids').doc(); kid.id = ref.id;
-    await dbWrite(() => ref.set({ name: kid.name, color: kid.color, createdAt: kid.createdAt }));
-  }
-  return kid;
-}
 async function chooseKid(kid) {
-  K.kid = kid; K.screen = 'ready'; K.histState = kid && db && !String(kid.id).startsWith('lokal-') ? 'loading' : 'idle';
+  K.kid = kid; K.screen = 'ready'; K.histState = 'loading';
   renderKid(); $('#app').focus({ preventScroll: true });
   await fetchHistory();
 }
 
 /* ---------- Lehrer-Ansicht ---------- */
-const T = { pack: 'auto', kid: 'all', range: 'all', open: new Set(), armed: null, qrOpen: null, editUrl: false, archOpen: false };
+const T = { pack: 'auto', kid: 'all', range: 'all', open: new Set(), armed: null, qrOpen: null, archOpen: false };
 const E = { open: false, title: '', mode: 'mix', range: 100, rounded: true, count: 10, limit: 5, tasks: [] };
-function appUrl() { return (APP_URL || lsGet('rr.url') || '').split('#')[0].split('?')[0]; }
+
+/* Anmeldung der Lehrkraft */
+const A = { state: 'loading', email: '', draftMail: '', error: '', busy: false };
+let authBound = false;
+function bindAuth() {
+  if (authBound) return; authBound = true;
+  sb.auth.onAuthStateChange(event => {
+    if (event === 'SIGNED_OUT') setTimeout(() => { if (mode === 'lehrer' && A.state === 'in') leaveTeacher('Du wurdest abgemeldet. Bitte melde dich neu an.'); }, 0);
+  });
+}
+async function bootTeacher() {
+  if (dbStatus === 'none') { A.state = 'out'; renderLogin(); return; }
+  sb = client(true); bindAuth();
+  A.state = 'loading'; renderLogin();
+  const token = routeToken;
+  let session = null;
+  try { const r = await sb.auth.getSession(); session = r && r.data && r.data.session; } catch (e) { /* ignorieren */ }
+  if (token !== routeToken) return;
+  if (session) await afterLogin(session); else { A.state = 'out'; renderLogin(); }
+}
+async function afterLogin(session) {
+  const token = routeToken;
+  A.email = (session.user && session.user.email) || '';
+  let isT = null;
+  try { const r = await sb.rpc('is_teacher'); isT = r.error ? null : r.data === true; } catch (e) { isT = null; }
+  if (token !== routeToken) return;
+  if (isT === null) { A.state = 'out'; A.error = 'Der Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.'; renderLogin(); return; }
+  if (!isT) { A.state = 'notteacher'; A.error = ''; renderLogin(); return; }
+  A.state = 'in'; A.error = '';
+  renderTop(); mountTeacher(); startLive();
+}
+function leaveTeacher(msg) {
+  stopLive();
+  A.state = 'out'; A.error = msg || '';
+  store.sessMap = new Map(); store.sessions = []; store.kids = new Map(); store.packs = new Map();
+  store.sessLoaded = store.kidsLoaded = store.packsLoaded = false; store.net = 'wait';
+  renderLogin();
+}
+async function logout() {
+  const c = sb;
+  A.draftMail = ''; A.email = '';
+  stopLive(); A.state = 'loading'; renderLogin();
+  try { if (c) await c.auth.signOut(); } catch (e) { /* ignorieren */ }
+  if (mode === 'lehrer') leaveTeacher('');
+}
+function loginError(e) {
+  const code = String((e && (e.code || e.error_code)) || ''), msg = String((e && e.message) || '');
+  if (code === 'invalid_credentials' || /Invalid login credentials/i.test(msg)) return 'E-Mail oder Passwort stimmt nicht.';
+  if (code === 'email_not_confirmed' || /not confirmed/i.test(msg)) return 'Die E-Mail-Adresse ist noch nicht bestätigt.';
+  return 'Die Anmeldung hat nicht geklappt. Bitte versuche es gleich noch einmal.';
+}
+function renderLogin() {
+  renderTop();
+  let h;
+  if (dbStatus === 'none') h = '<h1>Noch nicht eingerichtet</h1><p class="lead">Trage in der Datei <b>config.js</b> die Adresse und den Schlüssel deines Supabase-Projekts ein. Die Anleitung steht in der Datei README.md.</p>';
+  else if (A.state === 'loading') h = '<h1>Einen Moment …</h1><p class="lead">Die Anmeldung wird geprüft.</p>';
+  else if (A.state === 'notteacher') h = '<h1>Kein Lehrer-Konto</h1><p class="lead">Das Konto <b>' + esc(A.email) + '</b> darf die Auswertung nicht öffnen. Lehrkraft ist das erste Konto, das im Supabase-Projekt angelegt wurde.</p><button class="btn" data-act="logout">Abmelden</button>';
+  else h = '<h1>Lehrer-Anmeldung</h1><p class="lead">Melde dich mit dem Konto an, das du im Supabase-Projekt angelegt hast.</p>' +
+    '<form class="newform" id="loginform"><div><label for="lg-mail">E-Mail</label><input type="email" id="lg-mail" data-fk="lg-mail" autocomplete="username" required value="' + esc(A.draftMail) + '"></div>' +
+    '<div><label for="lg-pw">Passwort</label><input type="password" id="lg-pw" data-fk="lg-pw" autocomplete="current-password" required></div>' +
+    (A.error ? '<p class="err" role="alert">' + esc(A.error) + '</p>' : '') +
+    '<button class="btn primary big" type="submit" ' + (A.busy ? 'disabled' : '') + '>' + (A.busy ? 'Melde an …' : 'Anmelden') + '</button></form>';
+  setApp('<section class="panel login">' + h + '</section>');
+  if (A.state === 'out' && dbStatus !== 'none' && !A.busy) { const i = $(A.draftMail ? '#lg-pw' : '#lg-mail'); if (i) i.focus({ preventScroll: true }); }
+}
+function appUrl() { return location.href.split('#')[0].split('?')[0]; }
 function linkFor(id) { const u = appUrl(); return u ? u + (id === 'kind' ? '#kind' : '#p-' + id) : ''; }
 function qrSvg(text) {
   if (typeof qrcode !== 'function') return '';
@@ -1000,15 +1119,14 @@ function renderEditor() {
   if (fk) { const n = el.querySelector('[data-fk="' + fk.replace(/"/g, '') + '"]'); if (n) n.focus({ preventScroll: true }); }
 }
 async function savePack() {
-  if (!db || !canWrite) { toast('Dieses Gerät darf nichts speichern.'); return; }
   if (!E.tasks.length) newPreview();
   const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6).replace(/[^a-z0-9]/g, 'x');
   const d = new Date(), title = E.title.trim() || ('Päckchen vom ' + d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }));
-  const doc = { title: title.slice(0, 40), mode: E.mode, range: E.range, rounded: E.rounded, count: E.tasks.length, limitMin: E.limit, archived: false, createdAt: Date.now(), tasks: E.tasks.map(t => ({ op: t.op, a: t.a, b: t.b, answer: t.answer })) };
-  const ok = await dbWrite(() => db.collection('packs').doc(id).set(doc));
+  const doc = { id, title: title.slice(0, 40), mode: E.mode, range_max: E.range, rounded: E.rounded, limit_min: E.limit, archived: false, tasks: E.tasks.map(t => ({ op: t.op, a: t.a, b: t.b, answer: t.answer })) };
+  const ok = await dbWrite(() => sb.from('packs').insert(doc));
   if (!ok) { toast('Das Päckchen konnte nicht gespeichert werden.'); return; }
   E.open = false; E.title = ''; T.pack = id; T.qrOpen = id;
-  store.packs.set(id, normPack(id, doc));
+  const p = normPack(Object.assign({ created_at: new Date().toISOString() }, doc)); if (p) store.packs.set(id, p);
   renderEditor(); renderPacks(); renderFilters(); renderLive();
   toast('Päckchen gespeichert. Der QR-Code ist geöffnet.');
 }
@@ -1028,7 +1146,7 @@ function packCard(p) {
     (open && !p.archived ? qrBlock(pid, url, 'Diesen QR-Code scannen. Die Kinder rechnen dann direkt dieses Päckchen.') : '') + '</article>';
 }
 function qrBlock(id, url, text) { // id ist bereits maskiert
-  if (!url) return '<div class="notice err">Der Link dieser Seite fehlt. Füge ihn unten unter „Seiten-Link“ ein.</div>';
+  if (!url) return '<div class="notice err">Der Link dieser Seite ist nicht bekannt.</div>';
   const svg = qrSvg(url);
   return '<div class="qrbox"><div class="code">' + (svg || '<span class="muted" style="padding:10px;text-align:center">QR-Code nicht verfügbar</span>') + '</div><div><p>' + esc(text) + '</p>' +
     '<div class="linkrow"><input type="text" id="lnk-' + id + '" readonly value="' + esc(url) + '" aria-label="Link"><button class="btn small" data-act="copyurl" data-id="' + id + '">Link kopieren</button><button class="btn small" data-act="qrbig" data-id="' + id + '">Groß anzeigen</button></div></div></div>';
@@ -1036,13 +1154,11 @@ function qrBlock(id, url, text) { // id ist bereits maskiert
 function renderPacks() {
   const el = $('#t-packs'); if (!el || mode !== 'lehrer') return;
   const list = [...store.packs.values()], act = list.filter(p => !p.archived), arch = list.filter(p => p.archived);
-  const urlForm = '<form class="linkrow" id="urlform"><label class="sr" for="urlin">Link dieser Seite</label><input type="url" id="urlin" placeholder="Link dieser Seite einfügen" value="' + esc(appUrl()) + '"><button class="btn small" type="submit">Übernehmen</button></form>';
   el.innerHTML = '<div class="sech"><h2>Päckchen</h2><button class="btn primary" data-act="newpack" data-fk="newpack">Neues Päckchen</button></div>' +
-    (dbStatus === 'none' ? '<div class="notice err">Keine Verbindung zu den Daten. Öffne diese Seite angemeldet über claude.ai.</div>' : '') +
+    
     (act.length ? '<div class="packlist">' + act.map(packCard).join('') + '</div>' : (store.packsLoaded ? '<p class="empty" style="padding:14px 0">Noch kein Päckchen. Lege das erste an, dann bekommst du einen QR-Code für die Kinder.</p>' : '<p class="muted">Lade …</p>')) +
     (arch.length ? '<details id="t-arch" style="margin-top:14px"' + (T.archOpen ? ' open' : '') + '><summary class="link">Beendete Päckchen (' + arch.length + ')</summary><div class="packlist" style="margin-top:10px">' + arch.map(packCard).join('') + '</div></details>' : '') +
-    (act.length ? '<div class="pack" style="margin-top:12px"><div class="phead"><div><h3>Sammel-Link</h3><p class="muted">Zeigt den Kindern alle laufenden Päckchen zur Auswahl.</p></div><div class="pbtns"><button class="btn small" data-act="packqr" data-id="kind" aria-expanded="' + (T.qrOpen === 'kind') + '">' + (T.qrOpen === 'kind' ? 'QR-Code verbergen' : 'QR-Code zeigen') + '</button></div></div>' + (T.qrOpen === 'kind' ? qrBlock('kind', linkFor('kind'), 'Mit diesem QR-Code wählen die Kinder selbst ein Päckchen.') : '') + '</div>' : '') +
-    '<details style="margin-top:14px"' + (!appUrl() || T.editUrl ? ' open' : '') + '><summary class="link">Seiten-Link</summary><p class="muted" style="margin:8px 0">In den QR-Codes steckt dieser Link.</p>' + urlForm + '</details>';
+    (act.length ? '<div class="pack" style="margin-top:12px"><div class="phead"><div><h3>Sammel-Link</h3><p class="muted">Zeigt den Kindern alle laufenden Päckchen zur Auswahl.</p></div><div class="pbtns"><button class="btn small" data-act="packqr" data-id="kind" aria-expanded="' + (T.qrOpen === 'kind') + '">' + (T.qrOpen === 'kind' ? 'QR-Code verbergen' : 'QR-Code zeigen') + '</button></div></div>' + (T.qrOpen === 'kind' ? qrBlock('kind', linkFor('kind'), 'Mit diesem QR-Code wählen die Kinder selbst ein Päckchen.') : '') + '</div>' : '');
 }
 
 /* Auswertung */
@@ -1064,7 +1180,7 @@ function inRange(s) {
 }
 function sessionStatus(s) {
   if (s.done) return s.timedOut ? { c: 'warn', t: 'Zeit abgelaufen' } : { c: 'good', t: 'fertig' };
-  return Date.now() - s.updatedAt < 3 * 60000 ? { c: 'live', t: 'rechnet gerade' } : { c: '', t: 'abgebrochen' };
+  return Date.now() - Math.max(s.updatedAt, s.seenAt || 0) < 3 * 60000 ? { c: 'live', t: 'rechnet gerade' } : { c: '', t: 'abgebrochen' };
 }
 function attemptMap(all) {
   const groups = new Map(), map = new Map();
@@ -1202,14 +1318,13 @@ function roundHtml(s, att) {
 function renderLive() {
   const el = $('#t-live'); if (!el || mode !== 'lehrer') return;
   const a = document.activeElement, fk = a && a.dataset ? a.dataset.fk : null, cp = curPack();
+  store.sessions.forEach(decorate);
   const att = attemptMap(store.sessions);
   const inPack = store.sessions.filter(s => (cp === 'all' || s.packId === cp) && inRange(s));
   const sel = inPack.filter(s => T.kid === 'all' || s.kidId === T.kid);
   const tasks = sel.flatMap(s => s.tasks), st = stats(tasks), doneSel = sel.filter(s => s.done && s.tasks.length);
   let note = '';
-  if (dbStatus === 'none') note = '<div class="notice err">Keine Verbindung zu den Daten. Öffne diese Seite angemeldet über claude.ai.</div>';
-  else if (!store.sessLoaded && store.sessState === 'slow') note = '<div class="notice">Die Daten sind gerade nicht erreichbar. Die Anzeige kann veraltet sein.</div>';
-  else if (store.sessState === 'error') note = '<div class="notice err">Die Daten lassen sich nicht lesen. Prüfe, ob du Zugriff auf diese Seite hast.</div>';
+  if (store.net === 'err') note = '<div class="notice">Die Verbindung zum Server ist gerade unterbrochen. Die Anzeige kann veraltet sein.</div>';
   let body;
   if (!store.sessions.length && store.sessLoaded) body = '<div class="panel empty"><h2>Noch kein Versuch</h2><p>Sobald ein Kind ein Päckchen rechnet, siehst du es hier. Jede Antwort erscheint sofort.</p></div>';
   else {
@@ -1238,10 +1353,11 @@ function renderLive() {
 function renderManageList() {
   const el = $('#t-kidlist'); if (!el) return;
   const ks = [...store.kids.values()].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+  if (!store.kidsLoaded) { el.innerHTML = '<li class="muted">Lade …</li>'; return; }
   el.innerHTML = ks.length ? ks.map(k => {
     const armed = T.armed && T.armed.id === 'kid-' + k.id && Date.now() < T.armed.until;
     return '<li>' + badge(k.name, k.color) + '<span class="nm">' + esc(k.name) + '</span><button class="btn small danger' + (armed ? ' armed' : '') + '" data-act="delkid" data-id="' + esc(k.id) + '">' + (armed ? 'Wirklich löschen? Nochmal tippen' : 'Kind und alle Versuche löschen') + '</button></li>';
-  }).join('') : '<li class="muted">Noch keine Kinder. Sie legen sich selbst an, oder du fügst sie hier hinzu.</li>';
+  }).join('') : '<li class="muted">Noch keine Kinder. Lege sie oben an, dann erscheinen sie auf den Kinder-Geräten.</li>';
 }
 function arm(id, redraw) {
   if (T.armed && T.armed.id === id && Date.now() < T.armed.until) { T.armed = null; return true; }
@@ -1249,28 +1365,37 @@ function arm(id, redraw) {
   setTimeout(() => { if (T.armed && T.armed.id === id && Date.now() >= T.armed.until) { T.armed = null; redraw(); } }, 4100);
   return false;
 }
-async function deleteWhere(field, value) {
-  const snap = await db.collection('sessions').where(field, '==', value).get();
-  let ok = true;
-  for (const d of snap.docs) { ok = (await dbWrite(() => db.collection('sessions').doc(d.id).delete())) && ok; await sleep(60); }
-  return ok;
-}
 async function deleteRound(id) {
-  const ok = await dbWrite(() => db.collection('sessions').doc(id).delete());
+  const ok = await dbWrite(() => sb.from('sessions').delete().eq('id', id));
+  if (ok) { store.sessMap.delete(id); rebuildSessions(); }
   T.open.delete(id); toast(ok ? 'Versuch gelöscht.' : 'Löschen nicht möglich.');
 }
 async function deleteKid(id) {
-  let ok = await deleteWhere('kidId', id);
-  if (ok) ok = await dbWrite(() => db.collection('kids').doc(id).delete());
+  const ok = await dbWrite(() => sb.from('kids').delete().eq('id', id));
+  if (ok) { store.kids.delete(id); [...store.sessMap.values()].forEach(x => { if (x.kidId === id) store.sessMap.delete(x.id); }); rebuildSessions(); }
   if (T.kid === id) T.kid = 'all';
-  toast(ok ? 'Kind gelöscht.' : 'Löschen nicht vollständig möglich.');
+  toast(ok ? 'Kind gelöscht.' : 'Löschen nicht möglich.');
 }
 async function deletePack(id) {
-  let ok = await deleteWhere('packId', id);
-  if (ok) ok = await dbWrite(() => db.collection('packs').doc(id).delete());
+  const ok = await dbWrite(() => sb.from('packs').delete().eq('id', id));
+  if (ok) { store.packs.delete(id); [...store.sessMap.values()].forEach(x => { if (x.packId === id) store.sessMap.delete(x.id); }); rebuildSessions(); }
   if (T.pack === id) T.pack = 'auto';
   if (T.qrOpen === id) T.qrOpen = null;
-  toast(ok ? 'Päckchen gelöscht.' : 'Löschen nicht vollständig möglich.');
+  toast(ok ? 'Päckchen gelöscht.' : 'Löschen nicht möglich.');
+}
+async function addKids(names) {
+  const used = new Set([...store.kids.values()].map(k => k.color)), rows = [];
+  names.forEach(nm => {
+    const low = nm.toLowerCase();
+    if ([...store.kids.values()].some(k => k.name.toLowerCase() === low) || rows.some(r => r.name.toLowerCase() === low)) return;
+    const color = COLORS.find(c => !used.has(c)) || COLORS[(store.kids.size + rows.length) % COLORS.length];
+    used.add(color); rows.push({ name: nm, color });
+  });
+  if (!rows.length) return 0;
+  const r = await dbCall(() => sb.from('kids').insert(rows).select('id,name,color,created_at'));
+  if (!r.ok) return -1;
+  (r.data || []).forEach(d => { const k = normKid(d); if (k) store.kids.set(k.id, k); });
+  return rows.length;
 }
 
 /* QR-Code groß, zum Zeigen im Klassenraum */
@@ -1313,8 +1438,7 @@ document.addEventListener('click', async e => {
   switch (d.act) {
     case 'kidpack': go('p-' + d.id); break;
     case 'pick': { const k = store.kids.get(d.id); if (k) chooseKid(k); break; }
-    case 'newtoggle': K.showNew = true; renderKid(); { const i = $('#newname'); if (i) i.focus(); } break;
-    case 'color': K.newColor = d.c; document.querySelectorAll('.swatch').forEach(s => s.setAttribute('aria-pressed', String(s.dataset.c === d.c))); break;
+    case 'logout': await logout(); break;
     case 'switch': K.screen = 'pick'; K.kid = null; clearTimeout(K.fbTimer); stopClock(); renderKid(); break;
     case 'start': case 'again': if (K.kid && K.pack) startRound(); break;
     case 'finish': K.screen = 'pick'; K.kid = null; K.history = []; renderKid(); break;
@@ -1333,7 +1457,7 @@ document.addEventListener('click', async e => {
     case 'savepack': await savePack(); break;
     case 'packqr': T.qrOpen = T.qrOpen === d.id ? null : d.id; renderPacks(); break;
     case 'packsel': T.pack = d.id; T.kid = 'all'; renderFilters(); renderLive(); { const f = $('#t-filters'); if (f) f.scrollIntoView({ block: 'start' }); } break;
-    case 'packarch': { const p = store.packs.get(d.id); if (p) { const ok = await dbWrite(() => db.collection('packs').doc(d.id).update({ archived: !p.archived })); toast(ok ? (p.archived ? 'Päckchen wieder geöffnet.' : 'Päckchen beendet. Die Kinder sehen einen Hinweis.') : 'Das hat nicht geklappt.'); } break; }
+    case 'packarch': { const p = store.packs.get(d.id); if (p) { const was = p.archived, ok = await dbWrite(() => sb.from('packs').update({ archived: !was }).eq('id', d.id)); if (ok) { p.archived = !was; renderPacks(); renderFilters(); renderLive(); } toast(ok ? (was ? 'Päckchen wieder geöffnet.' : 'Päckchen beendet. Die Kinder sehen einen Hinweis.') : 'Das hat nicht geklappt.'); } break; }
     case 'delpack': if (arm('pack-' + d.id, renderPacks)) { await deletePack(d.id); renderPacks(); renderFilters(); renderLive(); } break;
     case 'qrbig': openBig(d.id); break;
     case 'closebig': closeBig(); break;
@@ -1350,24 +1474,22 @@ document.addEventListener('click', async e => {
 document.addEventListener('submit', async e => {
   e.preventDefault();
   const f = e.target;
-  if (f.id === 'newform') {
-    const kid = await addKid($('#newname').value, K.newColor);
-    if (kid) chooseKid(kid);
+  if (f.id === 'loginform') {
+    const mail = $('#lg-mail').value.trim(), pw = $('#lg-pw').value;
+    if (!mail || !pw || A.busy) return;
+    A.busy = true; A.error = ''; A.draftMail = mail; renderLogin();
+    let res;
+    try { res = await sb.auth.signInWithPassword({ email: mail, password: pw }); } catch (err) { res = { error: err || {} }; }
+    A.busy = false;
+    if (!res || res.error || !res.data || !res.data.session) { A.error = loginError(res && res.error); renderLogin(); return; }
+    await afterLogin(res.data.session);
   } else if (f.id === 'addkidform') {
-    const inp = $('#addkid'), names = [...new Set(inp.value.split(/[,;\n]+/).map(s => s.trim().replace(/\s+/g, ' ').slice(0, 14)).filter(Boolean))];
+    const inp = $('#addkid'), names = [...new Set(inp.value.split(/[,;\n]+/).map(x => x.trim().replace(/\s+/g, ' ').slice(0, 14)).filter(Boolean))];
     if (!names.length) return;
-    if (!db || !canWrite) { toast('Dieses Gerät darf nichts speichern.'); return; }
-    let n = 0;
-    for (const nm of names) {
-      if ([...store.kids.values()].some(k => k.name.toLowerCase() === nm.toLowerCase())) continue;
-      const used = new Set([...store.kids.values()].map(k => k.color));
-      await addKid(nm, COLORS.find(c => !used.has(c)) || COLORS[(store.kids.size + n) % COLORS.length]); n++;
-    }
-    inp.value = ''; toast(n ? n + (n === 1 ? ' Kind angelegt.' : ' Kinder angelegt.') : 'Diese Namen gibt es schon.');
-  } else if (f.id === 'urlform') {
-    const v = $('#urlin').value.trim();
-    if (/^https:\/\//.test(v)) { lsSet('rr.url', v.split('#')[0].split('?')[0]); T.editUrl = false; renderPacks(); }
-    else toast('Bitte den ganzen Link mit https:// einfügen.');
+    const n = await addKids(names);
+    if (n < 0) { toast('Das Anlegen hat nicht geklappt.'); return; }
+    inp.value = ''; renderManageList(); renderFilters(); renderLive();
+    toast(n ? n + (n === 1 ? ' Kind angelegt.' : ' Kinder angelegt.') : 'Diese Namen gibt es schon.');
   }
 });
 document.addEventListener('input', e => { if (e.target.id === 'e-title') E.title = e.target.value.slice(0, 40); });
