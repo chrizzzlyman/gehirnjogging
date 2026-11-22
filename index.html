@@ -11,6 +11,9 @@
 @font-face { font-family: "Kalam"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/kalam-latin-700-normal.woff2") format("woff2"); }
 @font-face { font-family: "Atkinson Hyperlegible"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/atkinson-hyperlegible-latin-400-normal.woff2") format("woff2"); }
 @font-face { font-family: "Atkinson Hyperlegible"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Ziffern"; font-style: normal; font-weight: 400; font-display: swap; unicode-range: U+0030-0039; src: url("fonts/andika-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Ziffern"; font-style: normal; font-weight: 700; font-display: swap; unicode-range: U+0030-0039; src: url("fonts/andika-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Andika"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/andika-latin-700-normal.woff2") format("woff2"); }
 /* Layout idea: Schulheft auf Kästchenpapier. Eine Ziffer pro Kästchen, Rotstift für Fehler.
    Dunkel = Schultafel mit Kreide. Kinder-Ansicht einspaltig, Lehrer-Ansicht als Übersicht. */
 :root {
@@ -28,9 +31,9 @@
   --bad-bg: #fbe3e0;
   --warn: #8a5a00;
   --warn-bg: #fbefcc;
-  --font-display: "Kalam", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-num: var(--font-body); /* Ziffern und Rechenzeichen: eindeutig lesbar, keine Handschrift */
+  --font-display: "Ziffern", "Kalam", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  --font-body: "Ziffern", "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-num: "Andika", var(--font-body); /* Aufgaben und Rechenzeichen. Überall in der App werden Ziffern (0–9) in Andika gesetzt: für Lernanfänger gezeichnet, 7 und 1 klar unterscheidbar, 0 ohne Strich. */
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -134,9 +137,9 @@ a { color: var(--accent); }
   animation: blink 1s steps(2, jump-none) infinite;
 }
 @keyframes blink { 50% { opacity: 0; } }
-.cells.ok .cell { border-color: var(--good); color: var(--good); background: var(--good-bg); }
-.cells.bad .cell { border-color: var(--bad); color: var(--bad); background: var(--bad-bg); }
-.cells.bad .cell::before {
+.ok .cell { border-color: var(--good); color: var(--good); background: var(--good-bg); }
+.bad .cell { border-color: var(--bad); color: var(--bad); background: var(--bad-bg); }
+.bad .cell::before {
   content: ""; position: absolute; left: 8%; right: 8%; top: 50%; height: 3px; background: var(--bad); transform: rotate(-14deg);
 }
 .cells.right .cell { border-color: var(--good); color: var(--good); background: var(--good-bg); }
@@ -149,7 +152,7 @@ a { color: var(--accent); }
 .hero .actions { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
 
 /* Kinder-Ansicht */
-.kid { max-width: 720px; margin: 8px auto 0; --cell: clamp(28px, calc((min(100vw, 720px) - 40px) / var(--n, 9)), 64px); }
+.kid { max-width: 720px; margin: 8px auto 0; --cell: clamp(24px, calc((min(100vw, 720px) - 40px) / var(--n, 9)), 64px); }
 .kid .h { font-size: 2.1rem; margin: 10px 0 4px; }
 .kid .lead { color: var(--ink-soft); margin-bottom: 18px; }
 .packname { display: inline-block; margin-bottom: 14px; padding: 4px 14px; border-radius: 999px; background: var(--sheet); border: 1.5px solid var(--grid-strong); font-weight: 700; }
@@ -180,22 +183,43 @@ fieldset { border: 0; padding: 0; margin: 0 0 20px; min-width: 0; }
 }
 .chip[aria-pressed="true"] { border-color: var(--ink); background: var(--accent); color: var(--on-accent); box-shadow: 0 3px 0 var(--ink); }
 .panel.hint { margin: 0 0 18px; display: grid; gap: 4px; }
+.specbox { display: grid; gap: 14px; margin: 0 0 20px; }
+.specnote { color: var(--ink-soft); margin: 0 0 12px; }
+.opnd { border: 1.5px solid var(--grid-strong); border-radius: 8px; padding: 12px 14px 8px; background: var(--sheet); }
+.opnd h4 { margin: 0 0 10px; font-size: 1.1rem; }
+.opnd h4 .hint { font-weight: 400; font-size: .92rem; color: var(--ink-soft); }
+.plrow { display: grid; grid-template-columns: 8.6rem 1fr; gap: 6px 12px; align-items: center; padding: 8px 0; border-top: 1px dashed var(--grid-strong); }
+.plrow .pl { font-weight: 700; }
+.digs { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.chip.dg { min-height: 40px; min-width: 40px; padding: 0; justify-content: center; font: 700 1.15rem var(--font-num); }
+.chip.dg:disabled { opacity: .35; cursor: not-allowed; }
+.chip.q { min-height: 36px; padding: 0 10px; font-size: .88rem; margin-left: 6px; }
+.chip.q + .chip.q { margin-left: 0; }
+.opnd .mini { margin: 0 0 8px; }
+.opnd .mini .chip { min-height: 38px; padding: 0 12px; font-size: .92rem; }
+@media (max-width: 560px) { .plrow { grid-template-columns: 1fr; gap: 4px; } }
 
 .whoami { display: flex; align-items: center; gap: 10px 14px; justify-content: space-between; flex-wrap: wrap; font-weight: 700; }
 .whoami .badge { width: 34px; height: 34px; font-size: 1.1rem; }
 .whoami span.name { display: flex; align-items: center; gap: 10px; }
-.clock {
-  display: inline-flex; align-items: center; gap: 6px; font: 700 1.1rem var(--font-body); font-variant-numeric: tabular-nums;
-  background: var(--sheet); border: 1.5px solid var(--grid-strong); border-radius: 999px; padding: 2px 12px;
-}
-.clock.low { color: var(--bad); border-color: var(--bad); background: var(--bad-bg); }
-.prog { display: flex; gap: 4px; list-style: none; padding: 0; margin: 12px 0 22px; }
+.clockbox { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 14px; margin: 12px 0 0; color: var(--ink); }
+.clockbox svg { width: 34px; height: 34px; color: var(--accent); flex: none; }
+.clockbox .ct { font: 700 clamp(3rem, 15vw, 4.4rem)/1 var(--font-num); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.clockbox .cl { font: 700 1.05rem var(--font-body); font-variant-numeric: tabular-nums; color: var(--ink-soft); background: var(--sheet); border: 1.5px solid var(--grid-strong); border-radius: 999px; padding: 2px 14px; }
+.clockbox:not(.lim) .cl { display: none; }
+.clockbox.low .ct { color: var(--bad); }
+.clockbox.low .cl { color: var(--bad); border-color: var(--bad); background: var(--bad-bg); }
+.prog { display: flex; gap: 4px; list-style: none; padding: 0; margin: 12px 0 18px; }
 .prog li { flex: 1 1 0; max-width: 30px; height: 12px; border-radius: 3px; background: var(--grid); border: 1.5px solid var(--grid-strong); }
 .prog li.ok { background: var(--good); border-color: var(--good); }
 .prog li.bad { background: repeating-linear-gradient(135deg, var(--bad) 0 4px, var(--bad-bg) 4px 7px); border-color: var(--bad); }
 .prog li.cur { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); background: var(--sheet); }
-.task { display: grid; gap: 10px; justify-items: center; min-height: calc(var(--cell) * 3 + 40px); align-content: start; }
+.task { display: grid; gap: 10px; justify-items: center; min-height: calc(var(--cell) * 2 + 40px); align-content: start; }
 .task .cells { width: 100%; }
+.task .cells + .cells { margin-top: 8px; }
+#taskrows { width: 100%; }
+.ansgrp { display: inline-flex; margin-left: calc(var(--cell) * .3); }
+.ansgrp.solo { margin-left: 0; }
 .fb { min-height: 44px; display: flex; align-items: center; justify-content: center; margin: 14px 0 6px; font: 700 1.5rem var(--font-display); }
 .fb.good { color: var(--good); } .fb.bad { color: var(--bad); }
 .fb svg { margin-right: 8px; flex: none; }
@@ -203,6 +227,16 @@ fieldset { border: 0; padding: 0; margin: 0 0 20px; min-width: 0; }
 .key {
   min-height: clamp(54px, 9vh, 70px); border-radius: 10px; border: 2px solid var(--ink); background: var(--sheet); color: var(--ink);
   font: 700 1.8rem/1 var(--font-num); cursor: pointer; box-shadow: 0 3px 0 var(--ink);
+}
+@media (max-height: 740px) {
+  .clockbox { margin-top: 2px; }
+  .clockbox .ct { font-size: 2.7rem; }
+  .clockbox svg { width: 26px; height: 26px; }
+  .prog { margin: 8px 0 10px; }
+  .task { min-height: calc(var(--cell) * 2 + 20px); }
+  .fb { min-height: 28px; margin: 4px 0 2px; font-size: 1.25rem; }
+  .pad { gap: 8px; }
+  .key { min-height: 50px; }
 }
 .key:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
 .key:disabled { opacity: .4; box-shadow: none; cursor: default; }
@@ -488,6 +522,113 @@ function makeTasks(mode, R, rounded, n) {
   return shuffle(out);
 }
 
+/* spec:begin */
+// Genaue Einstellung: Für jede Zahl einer Aufgabe wird festgelegt, wie viele Stellen sie hat
+// und welche Ziffern an jeder Stelle vorkommen dürfen. Jede Stelle ist eine 10-Bit-Maske (Bit d = Ziffer d erlaubt).
+// Die höchste Stelle ist nie 0. So hat jede Zahl wirklich so viele Stellen, wie eingestellt.
+const PLACE_NAMES = ['Einer', 'Zehner', 'Hunderter', 'Tausender', 'Zehntausender', 'Hunderttausender'];
+const PLACE_ABBR = ['E', 'Z', 'H', 'T', 'ZT', 'HT'];
+const COUNT_LABELS = ['nur Einer', 'bis Zehner', 'bis Hunderter', 'bis Tausender', 'bis Zehntausender', 'bis Hunderttausender'];
+const OPERAND_NAMES = { '+': ['1. Summand', '2. Summand'], '-': ['Minuend', 'Subtrahend'], '*': ['1. Faktor', '2. Faktor'], '/': ['Dividend', 'Divisor'] };
+const OPERAND_HINTS = { '-': ['davon wird abgezogen', 'das wird abgezogen'], '/': ['wird geteilt', 'geteilt durch'] };
+const MAX_PLACES = 6, ALL_D = 1023;
+const bit = d => 1 << d;
+const digitsInMask = m => { const r = []; for (let d = 0; d <= 9; d++) if (m & bit(d)) r.push(d); return r; };
+const effMask = (P, i) => i === P.length - 1 ? (P[i] & ~1) & ALL_D : P[i] & ALL_D;
+const defaultOpSpec = op => op === '*' ? { a: [1020], b: [1020] } : { a: [ALL_D, ALL_D], b: [op === '/' ? 1020 : ALL_D] };
+function numRange(P) {
+  let lo = 0, hi = 0;
+  for (let i = P.length - 1; i >= 0; i--) {
+    const ds = digitsInMask(effMask(P, i)); if (!ds.length) return null;
+    lo = lo * 10 + ds[0]; hi = hi * 10 + ds[ds.length - 1];
+  }
+  return { lo, hi };
+}
+function drawNum(P) {
+  let n = 0;
+  for (let i = P.length - 1; i >= 0; i--) { const ds = digitsInMask(effMask(P, i)); n = n * 10 + ds[ri(0, ds.length - 1)]; }
+  return n;
+}
+function fitsNum(P, n) {
+  const t = String(n); if (t.length !== P.length) return false;
+  for (let i = 0; i < P.length; i++) if (!(effMask(P, i) & bit(+t[t.length - 1 - i]))) return false;
+  return true;
+}
+function genSpecOne(op, S) {
+  const A = S.a, B = S.b;
+  if (op === '+') { const a = drawNum(A), b = drawNum(B); return { op, a, b, answer: a + b }; }
+  if (op === '*') { const a = drawNum(A), b = drawNum(B); return { op, a, b, answer: a * b }; }
+  if (op === '-') {
+    for (let k = 0; k < 400; k++) { const a = drawNum(A), b = drawNum(B); if (a > b) return { op, a, b, answer: a - b }; }
+    const ra = numRange(A), rb = numRange(B);
+    return ra && rb && ra.hi > rb.lo ? { op, a: ra.hi, b: rb.lo, answer: ra.hi - rb.lo } : null;
+  }
+  const ra = numRange(A); if (!ra) return null;
+  for (let r = 0; r < 40; r++) {
+    const b = drawNum(B), qlo = Math.ceil(ra.lo / b), qhi = Math.floor(ra.hi / b);
+    if (qlo > qhi) continue;
+    for (let k = 0; k < 300; k++) { const q = ri(qlo, qhi); if (fitsNum(A, b * q)) return { op, a: b * q, b, answer: q }; }
+    if (qhi - qlo <= 200000) {
+      const ok = []; for (let q = qlo; q <= qhi; q++) if (fitsNum(A, b * q)) ok.push(q);
+      if (ok.length) { const q = ok[ri(0, ok.length - 1)]; return { op, a: b * q, b, answer: q }; }
+    }
+  }
+  return null;
+}
+function specProblem(spec) {
+  for (const op of OPS) {
+    if (!spec.ops[op]) continue;
+    for (const w of ['a', 'b']) {
+      const P = spec.ops[op][w];
+      for (let i = 0; i < P.length; i++) if (!effMask(P, i)) return OPERAND_NAMES[op][w === 'a' ? 0 : 1] + ': Bei den ' + PLACE_NAMES[i] + 'n ist keine Ziffer ausgewählt.';
+    }
+  }
+  return '';
+}
+const noTaskText = op => op === '-'
+  ? 'Mit diesen Einstellungen gibt es keine Minus-Aufgabe mit positivem Ergebnis. Der Minuend muss größer als der Subtrahend sein können.'
+  : 'Mit diesen Einstellungen gibt es keine Geteilt-Aufgabe, die ohne Rest aufgeht. Erlaube zum Beispiel mehr Ziffern beim Dividenden oder kleinere Ziffern beim Divisor.';
+function makeSpecTasks(spec, n) {
+  const ops = OPS.filter(o => spec.ops[o]);
+  if (!ops.length) return { tasks: [], problem: 'Es ist keine Rechenart ausgewählt.' };
+  const bad = specProblem(spec); if (bad) return { tasks: [], problem: bad };
+  const seen = new Set(), out = [];
+  for (let i = 0; i < n; i++) {
+    const op = ops[i % ops.length]; let t = null, tries = 0;
+    do { t = genSpecOne(op, spec.ops[op]); tries++; } while (t && seen.has(t.op + t.a + '|' + t.b) && tries < 80);
+    if (!t) return { tasks: [], problem: noTaskText(op) };
+    seen.add(t.op + t.a + '|' + t.b); out.push(t);
+  }
+  return { tasks: shuffle(out), problem: '' };
+}
+function placeText(P, i) {
+  const m = effMask(P, i), full = i === P.length - 1 ? 1022 : ALL_D;
+  if (m === full) return '';
+  const ds = digitsInMask(m), a = PLACE_ABBR[i];
+  if (!ds.length) return a + ' leer';
+  if (ds.length === 1) return a + ' = ' + ds[0];
+  if (ds.length <= 5) return a + ' = ' + ds.slice(0, -1).join(', ') + ' oder ' + ds[ds.length - 1];
+  return a + ' ohne ' + digitsInMask(full & ~m).join(', ');
+}
+function operandText(P) {
+  const parts = [];
+  for (let i = P.length - 1; i >= 0; i--) { const t = placeText(P, i); if (t) parts.push(t); }
+  return P.length + '-stellig' + (parts.length ? ' (' + parts.join(', ') + ')' : '');
+}
+function specLabel(spec) {
+  const ops = OPS.filter(o => spec.ops[o]);
+  return ops.map(o => (ops.length > 1 ? OPLABEL[o] + ': ' : '') + operandText(spec.ops[o].a) + ' ' + SYM[o] + ' ' + operandText(spec.ops[o].b)).join('; ');
+}
+function sanitizeSpec(raw) {
+  if (!raw || typeof raw !== 'object' || !raw.ops || typeof raw.ops !== 'object') return null;
+  const okP = P => Array.isArray(P) && P.length >= 1 && P.length <= MAX_PLACES && P.every(m => Number.isInteger(m) && m >= 0 && m <= ALL_D);
+  const ops = {};
+  for (const o of OPS) { const x = raw.ops[o]; if (x && okP(x.a) && okP(x.b)) ops[o] = { a: x.a.slice(), b: x.b.slice() }; }
+  return Object.keys(ops).length ? { ops } : null;
+}
+const rangeFor = tasks => { const mx = Math.max(1, ...tasks.map(t => Math.max(t.a, t.b, t.answer))); return RANGES.find(r => r >= mx) || RANGES[RANGES.length - 1]; };
+/* spec:end */
+
 /* ---------- Datenbank (Supabase) ---------- */
 const store = { kids: new Map(), kidsLoaded: false, packs: new Map(), packsLoaded: false, sessMap: new Map(), sessions: [], sessLoaded: false, net: 'wait' };
 const SESS_LIMIT = 1000;
@@ -516,7 +657,7 @@ function normPack(d) {
   if (!tasks.length) return null;
   return {
     id: String(d.id), title: String(d.title || 'Päckchen').slice(0, 40), mode: MODES[d.mode] ? d.mode : 'mix', range: RANGES.includes(+d.range_max) ? +d.range_max : 100,
-    rounded: !!d.rounded, limitMin: Math.max(0, Math.min(180, Math.round(+d.limit_min || 0))), archived: !!d.archived, createdAt: tsOf(d.created_at), tasks
+    rounded: !!d.rounded, spec: sanitizeSpec(d.spec), limitMin: Math.max(0, Math.min(180, Math.round(+d.limit_min || 0))), archived: !!d.archived, createdAt: tsOf(d.created_at), tasks
   };
 }
 function normSession(d) {
@@ -785,7 +926,7 @@ function pickHtml() {
   return '<section class="kid"><div class="notice" id="notice" role="status" hidden></div><span class="packname">' + esc(K.pack.title) + '</span><h1 class="h">Wer rechnet?</h1><p class="lead">Tippe auf deinen Namen.</p><div id="kidlist">' + kidListHtml() + '</div></section>';
 }
 function packMeta(p) {
-  return MODES[p.mode].label + ' · ' + rangeLabel(p.range) + ' · ' + p.tasks.length + ' Aufgaben · ' + (p.limitMin ? p.limitMin + ' Min.' : 'ohne Zeitlimit');
+  return MODES[p.mode].label + ' · ' + (p.spec ? specLabel(p.spec) : rangeLabel(p.range)) + ' · ' + p.tasks.length + ' Aufgaben · ' + (p.limitMin ? p.limitMin + ' Min.' : 'ohne Zeitlimit');
 }
 const bestOf = h => h.slice().sort((a, b) => pctOf(b) - pctOf(a) || elapsedOf(a) - elapsedOf(b))[0];
 function readyHtml() {
@@ -799,7 +940,7 @@ function readyHtml() {
   }
   const lim = p.limitMin ? 'Du hast ' + p.limitMin + (p.limitMin === 1 ? ' Minute' : ' Minuten') + ' Zeit. Dann hört die App von selbst auf.' : 'Die Uhr läuft mit. Nimm dir so viel Zeit, wie du brauchst.';
   return '<section class="kid"><div class="notice" id="notice" role="status" hidden></div><span class="packname">' + esc(p.title) + '</span><h1 class="h">Hallo ' + esc(K.kid.name) + '!</h1>' +
-    '<p class="lead num">' + p.tasks.length + ' Aufgaben, ' + esc(rangeLabel(p.range)) + '. ' + lim + '</p>' + info +
+    '<p class="lead num">' + p.tasks.length + ' Aufgaben' + (p.spec ? '' : ', ' + esc(rangeLabel(p.range))) + '. ' + lim + '</p>' + info +
     '<button class="btn primary big" data-act="start" ' + (K.histState === 'loading' ? 'disabled' : '') + '>' + (n ? 'Versuch ' + (n + 1) + ' starten' : 'Los geht\'s') + '</button></section>';
 }
 async function fetchHistory() {
@@ -821,16 +962,26 @@ async function fetchHistory() {
 /* Ziffern in Kästchen */
 const digitsOf = s => [...String(s)].map((ch, i, arr) => ({ ch, gap: arr.length >= 5 && i > 0 && (arr.length - i) % 3 === 0 }));
 const wOf = cs => cs.length + .3 * cs.filter(c => c.gap).length;
-function exprRows(t) {
-  const A = digitsOf(t.a), B = digitsOf(t.b), op = [{ ch: SYM[t.op] }], eq = [{ ch: '=' }];
-  const one = [...A, ...op, ...B, ...eq];
-  return wOf(one) <= 10 ? [one] : [[...A, ...op], [...B, ...eq]];
+const taskCells = cs => cs.map(c => cellHtml(c.ch, c.gap ? 'gap' : '')).join('');
+// Die Antwort steht in derselben Zeile hinter dem Gleichheitszeichen. Passt alles nicht auf eine Zeile,
+// bricht die Aufgabe nach dem Rechenzeichen oder dem Gleichheitszeichen um. Die Kästchen schrumpfen vorher bis auf eine Mindestgröße.
+function taskLayout(t, ansLen) {
+  const g = { A: [...digitsOf(t.a), { ch: SYM[t.op] }], B: [...digitsOf(t.b), { ch: '=' }] };
+  const w = { A: wOf(g.A), B: wOf(g.B), N: ansLen + .3 * (ansLen >= 5 ? Math.floor((ansLen - 1) / 3) : 0) + .3 };
+  const avail = Math.min(window.innerWidth || 390, 720) - 40, caps = [Math.floor(avail / 34), Math.floor(avail / 28)];
+  const rowW = r => r.reduce((sum, k, i) => sum + (k === 'N' && i === 0 ? w.N - .3 : w[k]), 0);
+  const layouts = [[['A', 'B', 'N']], [['A'], ['B', 'N']], [['A', 'B'], ['N']], [['A'], ['B'], ['N']]];
+  // Reihenfolge der Wünsche: Antwort in der Zeile bei normaler Kästchengröße, dann in der Zeile mit kleineren Kästchen,
+  // erst danach die Antwort in eine eigene Zeile.
+  const order = [[0, 0], [1, 0], [0, 1], [1, 1], [2, 0], [3, 0], [2, 1], [3, 1]];
+  let best = null, bw = 0;
+  for (const [li, ci] of order) { const m = Math.max(...layouts[li].map(rowW)); if (m <= caps[ci]) { best = layouts[li]; bw = m; break; } }
+  if (!best) { bw = Infinity; for (const L of layouts) { const m = Math.max(...L.map(rowW)); if (m < bw) { best = L; bw = m; } } }
+  return { rows: best, groups: g, n: Math.max(8, bw) };
 }
-const cellsRow = (cs, cls) => '<div class="cells' + (cls ? ' ' + cls : '') + '">' + cs.map(c => cellHtml(c.ch, c.gap ? 'gap' : '')).join('') + '</div>';
 function ansCells() {
-  const t = K.tasks[K.idx];
   if (K.phase === 'ask') {
-    const len = Math.max(String(t.answer).length, K.input.length); let h = '';
+    const t = K.tasks[K.idx], len = Math.max(String(t.answer).length, K.input.length); let h = '';
     for (let i = 0; i < len; i++) {
       const gap = len >= 5 && i > 0 && (len - i) % 3 === 0;
       h += '<span class="cell' + (gap ? ' gap' : '') + (i === K.input.length ? ' cur' : '') + '">' + (K.input[i] || '') + '</span>';
@@ -839,17 +990,31 @@ function ansCells() {
   }
   return digitsOf(K.results[K.idx].given).map(c => '<span class="cell' + (c.gap ? ' gap' : '') + '">' + c.ch + '</span>').join('');
 }
+function taskBlock() {
+  const t = K.tasks[K.idx], r = K.results[K.idx], fb = K.phase === 'fb', ok = fb && isOk(r);
+  const ansLen = fb ? String(r.given).length : Math.max(String(t.answer).length, K.input.length);
+  const L = taskLayout(t, ansLen);
+  const rows = L.rows.map(row => '<div class="cells">' + row.map((k, i) => k === 'N'
+    ? '<span class="ansgrp' + (i === 0 ? ' solo' : '') + (fb ? (ok ? ' ok' : ' bad') : '') + '" id="ans">' + ansCells() + '</span>'
+    : taskCells(L.groups[k])).join('') + '</div>').join('');
+  return { html: rows, n: L.n, label: 'Aufgabe: ' + t.a + ' ' + SPOKEN[t.op] + ' ' + t.b + ' gleich. Deine Antwort: ' + (fb ? r.given : (K.input || 'noch leer')) };
+}
+const inputMax = () => Math.max(7, String(K.tasks[K.idx].answer).length + 1);
+const canType = () => K.phase === 'ask' && K.session && !K.session.done && K.input.length < inputMax();
+const mmssF = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const mmssC = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 function clockHtml() {
-  return '<span class="clock" id="clock" role="timer" aria-live="off">' + ICON_CLOCK + '<span id="clockt"></span></span>';
+  return '<div class="clockbox' + (K.limitMs ? ' lim' : '') + '" id="clock" role="timer" aria-live="off">' + ICON_CLOCK + '<span class="ct" id="clockt">0:00</span><span class="cl" id="clockl"></span></div>';
 }
 function renderClock() {
   const el = $('#clockt'); if (!el || !K.session) return;
   const e = K.session.done ? K.session.elapsedMs : Date.now() - K.startedAt;
+  el.textContent = mmssF(K.limitMs ? Math.min(e, K.limitMs) : e);
   if (K.limitMs) {
     const left = Math.max(0, K.limitMs - e);
-    el.textContent = 'noch ' + mmss(left);
+    $('#clockl').textContent = 'noch ' + mmssC(left);
     $('#clock').classList.toggle('low', left < Math.min(60000, K.limitMs / 4) && !K.session.done);
-  } else el.textContent = mmss(e);
+  }
 }
 function startClock() {
   stopClock();
@@ -857,7 +1022,7 @@ function startClock() {
     if (K.screen !== 'play' || !K.session) return;
     renderClock();
     if (K.limitMs && !K.session.done && Date.now() - K.startedAt >= K.limitMs) timeUp();
-  }, 400);
+  }, 250);
 }
 function stopClock() { clearInterval(K.clockTimer); K.clockTimer = null; }
 document.addEventListener('visibilitychange', () => {
@@ -866,8 +1031,7 @@ document.addEventListener('visibilitychange', () => {
 
 function playHtml() {
   const t = K.tasks[K.idx], r = K.results[K.idx], fb = K.phase === 'fb', ok = fb && isOk(r);
-  const rows = exprRows(t), ansLen = Math.max(String(t.answer).length, K.input.length);
-  const n = Math.max(8, ...rows.map(wOf), ansLen + (ansLen >= 5 ? .3 * Math.floor((ansLen - 1) / 3) : 0));
+  const tb = taskBlock();
   const prog = K.tasks.map((_, i) => { const x = K.results[i]; return '<li class="' + (x ? (isOk(x) ? 'ok' : 'bad') : (i === K.idx ? 'cur' : '')) + '"></li>'; }).join('');
   let fbHtml = '', right = '';
   if (fb && ok) fbHtml = '<div class="fb good">' + ICON_OK + esc(PRAISE[K.praise % PRAISE.length]) + '</div>';
@@ -880,19 +1044,21 @@ function playHtml() {
     '<button class="key" data-act="del" aria-label="Letzte Ziffer löschen" ' + dis + '>←</button>' +
     '<button class="key" data-act="digit" data-v="0" ' + dis + '>0</button>' +
     (fb ? '<button class="key okkey" data-act="next" data-fk="okkey">Weiter</button>' : '<button class="key okkey" id="okBtn" data-act="ok" data-fk="okkey" ' + (K.input ? '' : 'disabled') + '>OK</button>');
-  return '<section class="kid" style="--n:' + n + '"><div class="notice" id="notice" role="status" hidden></div>' +
-    '<div class="whoami"><span class="name">' + badge(K.kid.name, K.kid.color) + esc(K.kid.name) + '</span><span class="num">Aufgabe ' + (K.idx + 1) + ' von ' + K.tasks.length + '</span>' + clockHtml() + '</div>' +
+  return '<section class="kid" style="--n:' + tb.n + '"><div class="notice" id="notice" role="status" hidden></div>' +
+    '<div class="whoami"><span class="name">' + badge(K.kid.name, K.kid.color) + esc(K.kid.name) + '</span><span class="num">Aufgabe ' + (K.idx + 1) + ' von ' + K.tasks.length + '</span></div>' +
+    clockHtml() +
     '<ol class="prog" aria-hidden="true">' + prog + '</ol>' +
-    '<p class="sr">Rechne: ' + t.a + ' ' + SPOKEN[t.op] + ' ' + t.b + '</p>' +
-    '<div class="task"><div style="width:100%" aria-hidden="true">' + rows.map(rw => cellsRow(rw)).join('') + '</div>' +
-    '<div class="cells' + (fb ? (ok ? ' ok' : ' bad') : '') + '" id="ans" role="img" aria-label="' + (fb ? 'Deine Antwort: ' + r.given : 'Deine Antwort: ' + (K.input || 'noch leer')) + '">' + ansCells() + '</div>' + right + '</div>' +
+    '<div class="task"><div id="taskrows" role="img" aria-label="' + esc(tb.label) + '">' + tb.html + '</div>' + right + '</div>' +
     '<div role="status" aria-live="polite">' + fbHtml + '</div><div class="pad">' + keys + '</div></section>';
 }
 function updateAns() {
-  const a = $('#ans'); if (!a) return;
-  a.innerHTML = ansCells(); a.setAttribute('aria-label', 'Deine Antwort: ' + (K.input || 'noch leer'));
+  const box = $('#taskrows'); if (!box) return;
+  const tb = taskBlock();
+  box.innerHTML = tb.html; box.setAttribute('aria-label', tb.label);
+  const k = $('.kid'); if (k) k.style.setProperty('--n', tb.n);
   const ok = $('#okBtn'); if (ok) ok.disabled = !K.input;
 }
+window.addEventListener('resize', () => { if (mode === 'kind' && K.screen === 'play' && K.tasks.length) updateAns(); });
 function histBars(list, curId) {
   const items = list.slice(-8), off = list.length - items.length;
   return '<div class="hist" role="img" aria-label="Verlauf: ' + items.map((s, i) => 'Versuch ' + (off + i + 1) + ', ' + pctOf(s) + ' Prozent richtig').join('; ') + '">' +
@@ -1007,7 +1173,7 @@ async function chooseKid(kid) {
 
 /* ---------- Lehrer-Ansicht ---------- */
 const T = { pack: 'auto', kid: 'all', range: 'all', open: new Set(), armed: null, qrOpen: null, archOpen: false };
-const E = { open: false, title: '', mode: 'mix', range: 100, rounded: true, count: 10, limit: 5, tasks: [] };
+const E = { open: false, title: '', mode: 'mix', range: 100, rounded: true, count: 10, limit: 5, tasks: [], adv: false, spec: {}, useOp: {}, tab: '+', err: '' };
 
 /* Anmeldung der Lehrkraft */
 const A = { state: 'loading', email: '', draftMail: '', error: '', busy: false };
@@ -1097,32 +1263,78 @@ function mountTeacher() {
 }
 
 /* Päckchen anlegen */
-function newPreview() { E.tasks = makeTasks(E.mode, E.range, E.rounded, E.count); }
+const activeOps = () => MODES[E.mode].ops.filter(o => E.mode !== 'mix' || E.useOp[o] !== false);
+const specFor = op => E.spec[op] || (E.spec[op] = defaultOpSpec(op));
+const curTab = () => { const a = activeOps(); return a.includes(E.tab) ? E.tab : a[0]; };
+function buildSpec() {
+  const ops = {};
+  for (const o of activeOps()) { const x = specFor(o); ops[o] = { a: x.a.slice(), b: x.b.slice() }; }
+  return { ops };
+}
+function newPreview() {
+  E.err = '';
+  if (E.adv) {
+    const r = makeSpecTasks(buildSpec(), E.count);
+    E.tasks = r.tasks; E.err = r.problem;
+  } else E.tasks = makeTasks(E.mode, E.range, E.rounded, E.count);
+}
+const chipBtn = (on, act, attrs, label, fk, cls) => '<button type="button" class="chip' + (cls ? ' ' + cls : '') + '" aria-pressed="' + on + '" data-act="' + act + '" ' + attrs + ' data-fk="' + fk + '">' + label + '</button>';
+function operandHtml(op, w) {
+  const P = specFor(op)[w], n = P.length, k = w === 'a' ? 0 : 1, key = op + w, at = 'data-op="' + op + '" data-w="' + w + '"';
+  const hint = OPERAND_HINTS[op] ? ' <span class="hint">(' + OPERAND_HINTS[op][k] + ')</span>' : '';
+  let h = '<div class="opnd"><h4>' + esc(OPERAND_NAMES[op][k]) + hint + '</h4>' +
+    '<div class="chips mini" role="group" aria-label="Stellen von ' + esc(OPERAND_NAMES[op][k]) + '">' +
+    COUNT_LABELS.map((l, i) => chipBtn(n === i + 1, 'snp', at + ' data-n="' + (i + 1) + '"', l, 'snp' + key + (i + 1))).join('') + '</div>';
+  for (let i = n - 1; i >= 0; i--) {
+    const eff = effMask(P, i), top = i === n - 1, ai = at + ' data-i="' + i + '"';
+    h += '<div class="plrow"><span class="pl">' + PLACE_NAMES[i] + '</span><div class="digs" role="group" aria-label="Erlaubte Ziffern bei den ' + PLACE_NAMES[i] + 'n">' +
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(d => '<button type="button" class="chip dg" aria-pressed="' + !!(eff & bit(d)) + '" data-act="sdig" ' + ai + ' data-d="' + d + '" data-fk="sd' + key + i + d + '"' + (top && d === 0 ? ' disabled title="Die höchste Stelle ist nie 0."' : '') + '>' + d + '</button>').join('') +
+      chipBtn(false, 'sq', ai + ' data-q="all"', 'alle', 'sqa' + key + i, 'q') +
+      (top ? '' : chipBtn(false, 'sq', ai + ' data-q="zero"', 'immer 0', 'sqz' + key + i, 'q') + chipBtn(false, 'sq', ai + ' data-q="nz"', 'ohne 0', 'sqn' + key + i, 'q')) +
+      '</div></div>';
+  }
+  return h + '</div>';
+}
+function specHtml() {
+  let h = '<fieldset><legend>Aufgaben festlegen</legend><div class="chips">' + chipBtn(!E.adv, 'eadv', 'data-v="off"', 'Nach Zahlenraum', 'ead0') + chipBtn(E.adv, 'eadv', 'data-v="on"', 'Genau einstellen', 'ead1') + '</div></fieldset>';
+  if (!E.adv) {
+    return h + '<fieldset><legend>Zahlenraum</legend><div class="chips">' + RANGES.map(r => chipBtn(E.range === r, 'erange', 'data-r="' + r + '"', esc(rangeLabel(r)), 'er' + r)).join('') + '</div></fieldset>' +
+      (E.range >= 10000 ? '<fieldset><legend>Zahlen</legend><div class="chips">' + chipBtn(E.rounded, 'eround', 'data-v="on"', 'Runde Zahlen (Kopfrechnen)', 'ero1') + chipBtn(!E.rounded, 'eround', 'data-v="off"', 'Beliebige Zahlen', 'ero0') + '</div></fieldset>' : '');
+  }
+  const ops = activeOps(), tab = curTab();
+  h += '<p class="specnote">Lege für jede Zahl der Aufgabe fest, wie viele Stellen sie hat und welche Ziffern an jeder Stelle vorkommen dürfen. ' +
+    'Beispiel Zehnerzahlen wie 20 + 70: „bis Zehner“ wählen, bei den Einern „immer 0“. Die höchste Stelle ist nie 0.' + (ops.includes('/') ? ' Geteilt-Aufgaben gehen immer ohne Rest auf.' : '') + '</p>';
+  if (E.mode === 'mix') h += '<fieldset><legend>Rechenarten in der Mischung</legend><div class="chips">' + MODES.mix.ops.map(o => chipBtn(E.useOp[o] !== false, 'euse', 'data-op="' + o + '"', OPLABEL[o], 'eu' + o)).join('') + '</div></fieldset>';
+  if (ops.length > 1) h += '<fieldset><legend>Einstellen für</legend><div class="chips">' + ops.map(o => chipBtn(o === tab, 'etab', 'data-op="' + o + '"', OPLABEL[o], 'et' + o)).join('') + '</div></fieldset>';
+  return h + '<div class="specbox">' + operandHtml(tab, 'a') + operandHtml(tab, 'b') + '</div>';
+}
 function renderEditor() {
   const el = $('#t-editor'); if (!el) return;
   const act = document.activeElement, fk = act && act.dataset ? act.dataset.fk : null;
   el.hidden = !E.open;
   if (!E.open) { el.innerHTML = ''; return; }
-  const chip = (on, act, attrs, label, fk) => '<button type="button" class="chip" aria-pressed="' + on + '" data-act="' + act + '" ' + attrs + ' data-fk="' + fk + '">' + label + '</button>';
+  const chip = chipBtn;
   const uniq = new Set(E.tasks.map(t => t.op + t.a + '|' + t.b)).size;
-  const dupNote = uniq < E.tasks.length ? '<p class="notice" style="margin:0 0 12px">In diesem Zahlenraum gibt es nur wenige verschiedene Aufgaben. Einige wiederholen sich.</p>' : '';
+  const dupNote = E.tasks.length && uniq < E.tasks.length ? '<p class="notice" style="margin:0 0 12px">' + (E.adv ? 'Mit diesen Einstellungen' : 'In diesem Zahlenraum') + ' gibt es nur wenige verschiedene Aufgaben. Einige wiederholen sich.</p>' : '';
+  const errNote = E.err ? '<p class="notice err" style="margin:0 0 12px" role="alert">' + esc(E.err) + '</p>' : '';
   el.innerHTML = '<div class="sech"><h2>Neues Päckchen</h2></div><div class="fgrid">' +
     '<div style="margin-bottom:18px"><label class="flabel" for="e-title">Titel (optional)</label><input type="text" id="e-title" maxlength="40" value="' + esc(E.title) + '" placeholder="Zum Beispiel: Plusaufgaben, Woche 48"></div>' +
     '<fieldset><legend>Rechenart</legend><div class="chips">' + MODE_KEYS.map(m => chip(E.mode === m, 'emode', 'data-m="' + m + '"', MODES[m].label, 'em' + m)).join('') + '</div></fieldset>' +
-    '<fieldset><legend>Zahlenraum</legend><div class="chips">' + RANGES.map(r => chip(E.range === r, 'erange', 'data-r="' + r + '"', esc(rangeLabel(r)), 'er' + r)).join('') + '</div></fieldset>' +
-    (E.range >= 10000 ? '<fieldset><legend>Zahlen</legend><div class="chips">' + chip(E.rounded, 'eround', 'data-v="on"', 'Runde Zahlen (Kopfrechnen)', 'ero1') + chip(!E.rounded, 'eround', 'data-v="off"', 'Beliebige Zahlen', 'ero0') + '</div></fieldset>' : '') +
+    specHtml() +
     '<div class="row2"><div><label class="flabel" for="e-count">Anzahl der Aufgaben (1 bis ' + MAX_TASKS + ')</label><input type="number" id="e-count" min="1" max="' + MAX_TASKS + '" step="1" inputmode="numeric" value="' + E.count + '"></div>' +
     '<div><label class="flabel" for="e-limit">Zeitlimit</label><select class="field" id="e-limit">' + LIMITS.map(l => '<option value="' + l + '"' + (E.limit === l ? ' selected' : '') + '>' + (l ? l + (l === 1 ? ' Minute' : ' Minuten') : 'Kein Zeitlimit') + '</option>').join('') + '</select></div></div></div>' +
-    '<h3>Vorschau</h3>' + dupNote + '<ul class="prev num" aria-label="Aufgaben im Päckchen">' + E.tasks.map(t => '<li>' + esc(exprText(t)) + ' = ' + esc(fmtN(t.answer)) + '</li>').join('') + '</ul>' +
+    '<h3>Vorschau</h3>' + errNote + dupNote + (E.tasks.length ? '<ul class="prev num" aria-label="Aufgaben im Päckchen">' + E.tasks.map(t => '<li>' + esc(exprText(t)) + ' = ' + esc(fmtN(t.answer)) + '</li>').join('') + '</ul>' : '') +
     '<p class="muted" style="margin-bottom:14px">Alle Kinder rechnen genau diese Aufgaben. Die Reihenfolge mischt sich bei jedem Versuch.</p>' +
-    '<div class="actions-row"><button class="btn primary" data-act="savepack">Päckchen speichern</button><button class="btn" data-act="reroll">Neu würfeln</button><button class="btn" data-act="cancelpack">Abbrechen</button></div>';
-  if (fk) { const n = el.querySelector('[data-fk="' + fk.replace(/"/g, '') + '"]'); if (n) n.focus({ preventScroll: true }); }
+    '<div class="actions-row"><button class="btn primary" data-act="savepack"' + (E.err || !E.tasks.length ? ' disabled' : '') + '>Päckchen speichern</button><button class="btn" data-act="reroll">Neu würfeln</button><button class="btn" data-act="cancelpack">Abbrechen</button></div>';
+  if (fk) { const n = el.querySelector('[data-fk="' + fk.replace(/"/g, '') + '"]'); if (n && !n.disabled) n.focus({ preventScroll: true }); }
 }
 async function savePack() {
-  if (!E.tasks.length) newPreview();
+  if (!E.tasks.length && !E.err) newPreview();
+  if (E.err || !E.tasks.length) { toast('Bitte zuerst die Einstellungen anpassen.'); return; }
   const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6).replace(/[^a-z0-9]/g, 'x');
   const d = new Date(), title = E.title.trim() || ('Päckchen vom ' + d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }));
-  const doc = { id, title: title.slice(0, 40), mode: E.mode, range_max: E.range, rounded: E.rounded, limit_min: E.limit, archived: false, tasks: E.tasks.map(t => ({ op: t.op, a: t.a, b: t.b, answer: t.answer })) };
+  const doc = { id, title: title.slice(0, 40), mode: E.mode, range_max: E.adv ? rangeFor(E.tasks) : E.range, rounded: E.adv ? false : E.rounded, limit_min: E.limit, archived: false, tasks: E.tasks.map(t => ({ op: t.op, a: t.a, b: t.b, answer: t.answer })) };
+  if (E.adv) doc.spec = buildSpec();
   const ok = await dbWrite(() => sb.from('packs').insert(doc));
   if (!ok) { toast('Das Päckchen konnte nicht gespeichert werden.'); return; }
   E.open = false; E.title = ''; T.pack = id; T.qrOpen = id;
@@ -1442,7 +1654,7 @@ document.addEventListener('click', async e => {
     case 'switch': K.screen = 'pick'; K.kid = null; clearTimeout(K.fbTimer); stopClock(); renderKid(); break;
     case 'start': case 'again': if (K.kid && K.pack) startRound(); break;
     case 'finish': K.screen = 'pick'; K.kid = null; K.history = []; renderKid(); break;
-    case 'digit': if (K.phase === 'ask' && K.input.length < 7) { K.input = K.input === '0' ? d.v : K.input + d.v; updateAns(); } break;
+    case 'digit': if (canType()) { K.input = K.input === '0' ? d.v : K.input + d.v; updateAns(); } break;
     case 'del': if (K.phase === 'ask') { K.input = K.input.slice(0, -1); updateAns(); } break;
     case 'ok': submit(); break;
     case 'next': next(); break;
@@ -1450,7 +1662,13 @@ document.addEventListener('click', async e => {
     case 'fkid': T.kid = T.kid === d.id ? 'all' : d.id; renderFilters(); renderLive(); break;
     case 'newpack': E.open = true; newPreview(); renderEditor(); { const t = $('#t-editor'); if (t) t.scrollIntoView({ block: 'nearest' }); } break;
     case 'cancelpack': E.open = false; renderEditor(); break;
-    case 'emode': E.mode = d.m; newPreview(); renderEditor(); break;
+    case 'emode': E.mode = d.m; E.tab = activeOps()[0]; newPreview(); renderEditor(); break;
+    case 'eadv': E.adv = d.v === 'on'; newPreview(); renderEditor(); break;
+    case 'euse': if (E.useOp[d.op] !== false && activeOps().length === 1) { toast('Mindestens eine Rechenart bleibt ausgewählt.'); break; } E.useOp[d.op] = E.useOp[d.op] === false; E.tab = curTab(); newPreview(); renderEditor(); break;
+    case 'etab': E.tab = d.op; renderEditor(); break;
+    case 'snp': { const Q = specFor(d.op)[d.w], n = +d.n; while (Q.length < n) Q.push(ALL_D); Q.length = n; newPreview(); renderEditor(); break; }
+    case 'sdig': { const Q = specFor(d.op)[d.w], i = +d.i; Q[i] = effMask(Q, i) ^ bit(+d.d); newPreview(); renderEditor(); break; }
+    case 'sq': { const Q = specFor(d.op)[d.w], i = +d.i; Q[i] = d.q === 'zero' ? 1 : d.q === 'nz' ? 1022 : ALL_D; newPreview(); renderEditor(); break; }
     case 'erange': E.range = +d.r; newPreview(); renderEditor(); break;
     case 'eround': E.rounded = d.v === 'on'; newPreview(); renderEditor(); break;
     case 'reroll': newPreview(); renderEditor(); break;
@@ -1511,7 +1729,7 @@ document.addEventListener('keydown', e => {
   const tg = e.target.tagName;
   if (tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'BUTTON' || tg === 'SELECT' || e.ctrlKey || e.metaKey || e.altKey) return;
   if (K.phase === 'ask') {
-    if (/^[0-9]$/.test(e.key) && K.input.length < 7) { K.input = K.input === '0' ? e.key : K.input + e.key; updateAns(); }
+    if (/^[0-9]$/.test(e.key) && K.screen === 'play' && canType()) { K.input = K.input === '0' ? e.key : K.input + e.key; updateAns(); }
     else if (e.key === 'Backspace') { K.input = K.input.slice(0, -1); updateAns(); }
     else if (e.key === 'Enter') { e.preventDefault(); submit(); }
   } else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); }

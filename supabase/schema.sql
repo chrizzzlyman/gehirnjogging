@@ -30,8 +30,14 @@ create table if not exists public.packs (
   limit_min integer not null default 0 check (limit_min between 0 and 180),
   archived boolean not null default false,
   created_at timestamptz not null default now(),
-  tasks jsonb not null check (jsonb_typeof(tasks) = 'array' and jsonb_array_length(tasks) between 1 and 100)
+  tasks jsonb not null check (jsonb_typeof(tasks) = 'array' and jsonb_array_length(tasks) between 1 and 100),
+  -- Einstellungen der genauen Aufgaben-Auswahl (Stellen und Ziffern). Leer = Auswahl nach Zahlenraum.
+  spec jsonb check (spec is null or (jsonb_typeof(spec) = 'object' and octet_length(spec::text) < 4000))
 );
+
+-- Für Projekte, die mit einer älteren Version dieses Skripts eingerichtet wurden:
+alter table public.packs add column if not exists spec jsonb
+  check (spec is null or (jsonb_typeof(spec) = 'object' and octet_length(spec::text) < 4000));
 
 create table if not exists public.sessions (
   id uuid primary key,

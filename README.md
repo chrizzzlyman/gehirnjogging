@@ -6,10 +6,13 @@ Die App besteht aus einer einzigen Webseite (`index.html`) und läuft **nur übe
 
 ## Was die App kann
 
-- **Päckchen anlegen:** Rechenart (Addition, Subtraktion, Multiplikation, Division, Mischung), Zahlenraum (bis 10, 20, 100, 1000, 10 000, 100 000, 1 000 000), Anzahl der Aufgaben und eine automatische Zeitgrenze in Minuten.
+- **Päckchen anlegen:** Rechenart (Addition, Subtraktion, Multiplikation, Division, Mischung), Anzahl der Aufgaben und eine automatische Zeitgrenze in Minuten. Die Aufgaben legst du auf eine von zwei Arten fest:
+  - **Nach Zahlenraum:** bis 10, 20, 100, 1000, 10 000, 100 000 oder 1 000 000.
+  - **Genau einstellen:** Für jede Zahl der Aufgabe (z. B. 1. und 2. Summand) wählst du, wie viele Stellen sie hat (nur Einer, bis Zehner, bis Hunderter … bis Hunderttausender) und welche Ziffern an jeder Stelle vorkommen dürfen. Beispiele: Zehnerzahlen wie 20 + 70 = „bis Zehner“, Einer „immer 0“. Hunderter plus Einer = erste Zahl „bis Hunderter“ mit Zehnern und Einern „immer 0“, zweite Zahl „nur Einer“. Unter der Einstellung siehst du sofort Beispielaufgaben. In der Mischung kannst du die Rechenarten einzeln ein- und ausschalten und für jede eigene Regeln setzen.
+- **Antwort in der Aufgabenzeile:** Die Kinder tragen das Ergebnis direkt hinter dem Gleichheitszeichen ein, auf Kästchenpapier. Nur bei sehr langen Aufgaben bricht die Zeile um.
 - **QR-Code pro Päckchen:** Die Kinder scannen den Code und rechnen genau dieses Päckchen. In der nächsten Woche legst du ein neues Päckchen mit neuem QR-Code an.
 - **Üben über mehrere Tage:** Dieselben Aufgaben können beliebig oft gerechnet werden. Die Kinder sehen ihren Verlauf und bekommen einen Hinweis bei einem neuen Bestwert.
-- **Zeit wird gestoppt:** pro Aufgabe und insgesamt. Läuft die Zeitgrenze ab, bricht die App ab und speichert, was bis dahin gerechnet wurde.
+- **Zeit wird gestoppt:** pro Aufgabe und insgesamt. Die Kinder sehen die vergangene Zeit groß, die Restzeit klein daneben. Läuft die Zeitgrenze ab, bricht die App ab und speichert, was bis dahin gerechnet wurde.
 - **Live-Ansicht für dich:** Jede Antwort erscheint sofort auf deinem Gerät, mit Zeit, Fehlern und Auswertung nach Kind und Päckchen.
 
 ## Einmalig einrichten
@@ -75,6 +78,7 @@ Das **Passwort** und der **secret key** gehören nie in eine Datei im Repository
 - **Passwort vergessen:** Im Supabase-Dashboard unter Authentication → Users beim Konto ein neues Passwort setzen.
 - **Sicherung:** Für eine Sicherung aller Daten im Dashboard unter Table Editor die Tabellen als CSV exportieren.
 - **Neues Supabase-Projekt?** `supabase/schema.sql` im SQL Editor ausführen (das Skript lässt sich gefahrlos wiederholen), danach Project URL und Publishable key in `config.js` ersetzen.
+- **Altes Datenbank-Skript eingespielt?** Dann einmal die aktuelle `supabase/schema.sql` ausführen. Sie ergänzt die Spalte `spec`, die für „Genau einstellen“ gebraucht wird. In deinem Projekt „rechenrunde“ ist sie schon angelegt.
 
 ## Dateien
 
@@ -85,4 +89,4 @@ Das **Passwort** und der **secret key** gehören nie in eine Datei im Repository
 | `supabase/schema.sql` | Tabellen, Zugriffsregeln, Funktionen |
 | `vendor/supabase.js` | supabase-js 2.119.2 (MIT) |
 | `vendor/qrcode.js` | qrcode-generator (MIT) |
-| `fonts/` | Kalam und Atkinson Hyperlegible (SIL Open Font License) |
+| `fonts/` | Kalam (Überschriften), Atkinson Hyperlegible (Text), Andika (alle Ziffern und die Aufgaben). Alle unter SIL Open Font License, Texte in `fonts/LIZENZEN.txt` |
