@@ -192,7 +192,8 @@ fieldset { border: 0; padding: 0; margin: 0 0 20px; min-width: 0; }
 .plrow .pl { font-weight: 700; }
 .digs { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
 .chip.dg { min-height: 40px; min-width: 40px; padding: 0; justify-content: center; font: 700 1.15rem var(--font-num); }
-.chip.dg:disabled { opacity: .35; cursor: not-allowed; }
+.chip:disabled { opacity: .4; cursor: not-allowed; }
+.chip.dg:disabled { opacity: .35; }
 .chip.q { min-height: 36px; padding: 0 10px; font-size: .88rem; margin-left: 6px; }
 .chip.q + .chip.q { margin-left: 0; }
 .opnd .mini { margin: 0 0 8px; }
@@ -544,9 +545,10 @@ function numRange(P) {
   }
   return { lo, hi };
 }
-function drawNum(P) {
+const digitLists = P => P.map((_, i) => digitsInMask(effMask(P, i)));
+function drawNum(L) {
   let n = 0;
-  for (let i = P.length - 1; i >= 0; i--) { const ds = digitsInMask(effMask(P, i)); n = n * 10 + ds[ri(0, ds.length - 1)]; }
+  for (let i = L.length - 1; i >= 0; i--) { const ds = L[i]; n = n * 10 + ds[ri(0, ds.length - 1)]; }
   return n;
 }
 function fitsNum(P, n) {
@@ -554,21 +556,27 @@ function fitsNum(P, n) {
   for (let i = 0; i < P.length; i++) if (!(effMask(P, i) & bit(+t[t.length - 1 - i]))) return false;
   return true;
 }
-function genSpecOne(op, S) {
-  const A = S.a, B = S.b;
-  if (op === '+') { const a = drawNum(A), b = drawNum(B); return { op, a, b, answer: a + b }; }
-  if (op === '*') { const a = drawNum(A), b = drawNum(B); return { op, a, b, answer: a * b }; }
-  if (op === '-') {
-    for (let k = 0; k < 400; k++) { const a = drawNum(A), b = drawNum(B); if (a > b) return { op, a, b, answer: a - b }; }
-    const ra = numRange(A), rb = numRange(B);
-    return ra && rb && ra.hi > rb.lo ? { op, a: ra.hi, b: rb.lo, answer: ra.hi - rb.lo } : null;
+function genSpecOne(op, S, R, tries) {
+  const A = S.a, B = S.b, ra = numRange(A), rb = numRange(B);
+  if (!ra || !rb) return null;
+  const LA = digitLists(A), LB = digitLists(B), quick = tries < 2000;
+  // R = größte erlaubte Zahl (Zahlenraum). Alle Zahlen der Aufgabe, auch das Ergebnis, bleiben darunter.
+  if (op === '+' || op === '*') {
+    const f = op === '+' ? (x, y) => x + y : (x, y) => x * y;
+    for (let k = 0; k < tries; k++) { const a = drawNum(LA), b = drawNum(LB), r = f(a, b); if (r <= R) return { op, a, b, answer: r }; }
+    return !quick && f(ra.lo, rb.lo) <= R ? { op, a: ra.lo, b: rb.lo, answer: f(ra.lo, rb.lo) } : null;
   }
-  const ra = numRange(A); if (!ra) return null;
-  for (let r = 0; r < 40; r++) {
-    const b = drawNum(B), qlo = Math.ceil(ra.lo / b), qhi = Math.floor(ra.hi / b);
+  if (op === '-') {
+    for (let k = 0; k < tries; k++) { const a = drawNum(LA), b = drawNum(LB); if (a > b && a <= R) return { op, a, b, answer: a - b }; }
+    return !quick && ra.hi > rb.lo && ra.hi <= R ? { op, a: ra.hi, b: rb.lo, answer: ra.hi - rb.lo } : null;
+  }
+  const hi = Math.min(ra.hi, R); let budget = 40000; // Obergrenze für das Durchprobieren, damit die Vorschau schnell bleibt
+  for (let r = 0; r < (quick ? 8 : 30); r++) {
+    const b = drawNum(LB), qlo = Math.ceil(ra.lo / b), qhi = Math.floor(hi / b);
     if (qlo > qhi) continue;
-    for (let k = 0; k < 300; k++) { const q = ri(qlo, qhi); if (fitsNum(A, b * q)) return { op, a: b * q, b, answer: q }; }
-    if (qhi - qlo <= 200000) {
+    for (let k = 0; k < (quick ? 40 : 200); k++) { const q = ri(qlo, qhi); if (fitsNum(A, b * q)) return { op, a: b * q, b, answer: q }; }
+    if (!quick && qhi - qlo < budget) {
+      budget -= qhi - qlo + 1;
       const ok = []; for (let q = qlo; q <= qhi; q++) if (fitsNum(A, b * q)) ok.push(q);
       if (ok.length) { const q = ok[ri(0, ok.length - 1)]; return { op, a: b * q, b, answer: q }; }
     }
@@ -585,18 +593,21 @@ function specProblem(spec) {
   }
   return '';
 }
-const noTaskText = op => op === '-'
-  ? 'Mit diesen Einstellungen gibt es keine Minus-Aufgabe mit positivem Ergebnis. Der Minuend muss größer als der Subtrahend sein können.'
-  : 'Mit diesen Einstellungen gibt es keine Geteilt-Aufgabe, die ohne Rest aufgeht. Erlaube zum Beispiel mehr Ziffern beim Dividenden oder kleinere Ziffern beim Divisor.';
+const noTaskText = (op, R) => R < Infinity
+  ? 'Mit diesen Einstellungen gibt es im Zahlenraum bis ' + fmtN(R) + ' keine ' + OPLABEL[op] + '-Aufgabe. Wähle einen größeren Zahlenraum oder weniger Stellen und Ziffern.'
+  : op === '-'
+    ? 'Mit diesen Einstellungen gibt es keine Minus-Aufgabe mit positivem Ergebnis. Der Minuend muss größer als der Subtrahend sein können.'
+    : 'Mit diesen Einstellungen gibt es keine Geteilt-Aufgabe, die ohne Rest aufgeht. Erlaube zum Beispiel mehr Ziffern beim Dividenden oder kleinere Ziffern beim Divisor.';
 function makeSpecTasks(spec, n) {
   const ops = OPS.filter(o => spec.ops[o]);
   if (!ops.length) return { tasks: [], problem: 'Es ist keine Rechenart ausgewählt.' };
   const bad = specProblem(spec); if (bad) return { tasks: [], problem: bad };
-  const seen = new Set(), out = [];
+  const seen = new Set(), out = [], R = spec.max || Infinity;
   for (let i = 0; i < n; i++) {
-    const op = ops[i % ops.length]; let t = null, tries = 0;
-    do { t = genSpecOne(op, spec.ops[op]); tries++; } while (t && seen.has(t.op + t.a + '|' + t.b) && tries < 80);
-    if (!t) return { tasks: [], problem: noTaskText(op) };
+    const op = ops[i % ops.length];
+    let t = genSpecOne(op, spec.ops[op], R, 2000);
+    if (!t) return { tasks: [], problem: noTaskText(op, R) };
+    for (let k = 0; k < 30 && seen.has(t.op + t.a + '|' + t.b); k++) { const u = genSpecOne(op, spec.ops[op], R, 100); if (u) t = u; }
     seen.add(t.op + t.a + '|' + t.b); out.push(t);
   }
   return { tasks: shuffle(out), problem: '' };
@@ -624,8 +635,10 @@ function sanitizeSpec(raw) {
   const okP = P => Array.isArray(P) && P.length >= 1 && P.length <= MAX_PLACES && P.every(m => Number.isInteger(m) && m >= 0 && m <= ALL_D);
   const ops = {};
   for (const o of OPS) { const x = raw.ops[o]; if (x && okP(x.a) && okP(x.b)) ops[o] = { a: x.a.slice(), b: x.b.slice() }; }
-  return Object.keys(ops).length ? { ops } : null;
+  if (!Object.keys(ops).length) return null;
+  return RANGES.includes(+raw.max) ? { ops, max: +raw.max } : { ops };
 }
+const maxPlacesFor = R => Math.max(1, Math.min(MAX_PLACES, String(R - 1).length));
 const rangeFor = tasks => { const mx = Math.max(1, ...tasks.map(t => Math.max(t.a, t.b, t.answer))); return RANGES.find(r => r >= mx) || RANGES[RANGES.length - 1]; };
 /* spec:end */
 
@@ -926,7 +939,7 @@ function pickHtml() {
   return '<section class="kid"><div class="notice" id="notice" role="status" hidden></div><span class="packname">' + esc(K.pack.title) + '</span><h1 class="h">Wer rechnet?</h1><p class="lead">Tippe auf deinen Namen.</p><div id="kidlist">' + kidListHtml() + '</div></section>';
 }
 function packMeta(p) {
-  return MODES[p.mode].label + ' · ' + (p.spec ? specLabel(p.spec) : rangeLabel(p.range)) + ' · ' + p.tasks.length + ' Aufgaben · ' + (p.limitMin ? p.limitMin + ' Min.' : 'ohne Zeitlimit');
+  return MODES[p.mode].label + ' · ' + (p.spec ? specLabel(p.spec) + (p.spec.max ? ' · ' + rangeLabel(p.spec.max) : '') : rangeLabel(p.range)) + ' · ' + p.tasks.length + ' Aufgaben · ' + (p.limitMin ? p.limitMin + ' Min.' : 'ohne Zeitlimit');
 }
 const bestOf = h => h.slice().sort((a, b) => pctOf(b) - pctOf(a) || elapsedOf(a) - elapsedOf(b))[0];
 function readyHtml() {
@@ -940,7 +953,7 @@ function readyHtml() {
   }
   const lim = p.limitMin ? 'Du hast ' + p.limitMin + (p.limitMin === 1 ? ' Minute' : ' Minuten') + ' Zeit. Dann hört die App von selbst auf.' : 'Die Uhr läuft mit. Nimm dir so viel Zeit, wie du brauchst.';
   return '<section class="kid"><div class="notice" id="notice" role="status" hidden></div><span class="packname">' + esc(p.title) + '</span><h1 class="h">Hallo ' + esc(K.kid.name) + '!</h1>' +
-    '<p class="lead num">' + p.tasks.length + ' Aufgaben' + (p.spec ? '' : ', ' + esc(rangeLabel(p.range))) + '. ' + lim + '</p>' + info +
+    '<p class="lead num">' + p.tasks.length + ' Aufgaben' + (p.spec ? (p.spec.max ? ', ' + esc(rangeLabel(p.spec.max)) : '') : ', ' + esc(rangeLabel(p.range))) + '. ' + lim + '</p>' + info +
     '<button class="btn primary big" data-act="start" ' + (K.histState === 'loading' ? 'disabled' : '') + '>' + (n ? 'Versuch ' + (n + 1) + ' starten' : 'Los geht\'s') + '</button></section>';
 }
 async function fetchHistory() {
@@ -1173,7 +1186,7 @@ async function chooseKid(kid) {
 
 /* ---------- Lehrer-Ansicht ---------- */
 const T = { pack: 'auto', kid: 'all', range: 'all', open: new Set(), armed: null, qrOpen: null, archOpen: false };
-const E = { open: false, title: '', mode: 'mix', range: 100, rounded: true, count: 10, limit: 5, tasks: [], adv: false, spec: {}, useOp: {}, tab: '+', err: '' };
+const E = { open: false, title: '', mode: 'mix', range: 100, rounded: true, count: 10, limit: 5, tasks: [], adv: false, free: false, spec: {}, useOp: {}, tab: '+', err: '' };
 
 /* Anmeldung der Lehrkraft */
 const A = { state: 'loading', email: '', draftMail: '', error: '', busy: false };
@@ -1269,7 +1282,13 @@ const curTab = () => { const a = activeOps(); return a.includes(E.tab) ? E.tab :
 function buildSpec() {
   const ops = {};
   for (const o of activeOps()) { const x = specFor(o); ops[o] = { a: x.a.slice(), b: x.b.slice() }; }
-  return { ops };
+  return E.free ? { ops } : { ops, max: E.range };
+}
+// Passt die Stellenzahl aller Zahlen an den gewählten Zahlenraum an (bis 100 gibt es keine dreistelligen Zahlen).
+function fitSpecToRange() {
+  if (E.free) return;
+  const mp = maxPlacesFor(E.range);
+  for (const o of Object.keys(E.spec)) for (const w of ['a', 'b']) if (E.spec[o][w].length > mp) E.spec[o][w].length = mp;
 }
 function newPreview() {
   E.err = '';
@@ -1278,13 +1297,13 @@ function newPreview() {
     E.tasks = r.tasks; E.err = r.problem;
   } else E.tasks = makeTasks(E.mode, E.range, E.rounded, E.count);
 }
-const chipBtn = (on, act, attrs, label, fk, cls) => '<button type="button" class="chip' + (cls ? ' ' + cls : '') + '" aria-pressed="' + on + '" data-act="' + act + '" ' + attrs + ' data-fk="' + fk + '">' + label + '</button>';
+const chipBtn = (on, act, attrs, label, fk, cls, off) => '<button type="button" class="chip' + (cls ? ' ' + cls : '') + '" aria-pressed="' + on + '" data-act="' + act + '" ' + attrs + ' data-fk="' + fk + '"' + (off ? ' disabled title="' + off + '"' : '') + '>' + label + '</button>';
 function operandHtml(op, w) {
-  const P = specFor(op)[w], n = P.length, k = w === 'a' ? 0 : 1, key = op + w, at = 'data-op="' + op + '" data-w="' + w + '"';
+  const P = specFor(op)[w], n = P.length, k = w === 'a' ? 0 : 1, key = op + w, mp = E.free ? MAX_PLACES : maxPlacesFor(E.range), at = 'data-op="' + op + '" data-w="' + w + '"';
   const hint = OPERAND_HINTS[op] ? ' <span class="hint">(' + OPERAND_HINTS[op][k] + ')</span>' : '';
   let h = '<div class="opnd"><h4>' + esc(OPERAND_NAMES[op][k]) + hint + '</h4>' +
     '<div class="chips mini" role="group" aria-label="Stellen von ' + esc(OPERAND_NAMES[op][k]) + '">' +
-    COUNT_LABELS.map((l, i) => chipBtn(n === i + 1, 'snp', at + ' data-n="' + (i + 1) + '"', l, 'snp' + key + (i + 1))).join('') + '</div>';
+    COUNT_LABELS.map((l, i) => chipBtn(n === i + 1, 'snp', at + ' data-n="' + (i + 1) + '"', l, 'snp' + key + (i + 1), '', i + 1 > mp ? 'Im Zahlenraum ' + rangeLabel(E.range) + ' nicht möglich' : '')).join('') + '</div>';
   for (let i = n - 1; i >= 0; i--) {
     const eff = effMask(P, i), top = i === n - 1, ai = at + ' data-i="' + i + '"';
     h += '<div class="plrow"><span class="pl">' + PLACE_NAMES[i] + '</span><div class="digs" role="group" aria-label="Erlaubte Ziffern bei den ' + PLACE_NAMES[i] + 'n">' +
@@ -1302,8 +1321,9 @@ function specHtml() {
       (E.range >= 10000 ? '<fieldset><legend>Zahlen</legend><div class="chips">' + chipBtn(E.rounded, 'eround', 'data-v="on"', 'Runde Zahlen (Kopfrechnen)', 'ero1') + chipBtn(!E.rounded, 'eround', 'data-v="off"', 'Beliebige Zahlen', 'ero0') + '</div></fieldset>' : '');
   }
   const ops = activeOps(), tab = curTab();
+  h += '<fieldset><legend>Zahlenraum</legend><div class="chips">' + chipBtn(E.free, 'efree', '', 'ohne Begrenzung', 'ef0') + RANGES.map(r => chipBtn(!E.free && E.range === r, 'erange', 'data-r="' + r + '"', esc(rangeLabel(r)), 'er' + r)).join('') + '</div></fieldset>';
   h += '<p class="specnote">Lege für jede Zahl der Aufgabe fest, wie viele Stellen sie hat und welche Ziffern an jeder Stelle vorkommen dürfen. ' +
-    'Beispiel Zehnerzahlen wie 20 + 70: „bis Zehner“ wählen, bei den Einern „immer 0“. Die höchste Stelle ist nie 0.' + (ops.includes('/') ? ' Geteilt-Aufgaben gehen immer ohne Rest auf.' : '') + '</p>';
+    'Beispiel Zehnerzahlen wie 20 + 70: „bis Zehner“ wählen, bei den Einern „immer 0“. Die höchste Stelle ist nie 0. Alle Zahlen der Aufgabe, auch das Ergebnis, bleiben im gewählten Zahlenraum.' + (ops.includes('/') ? ' Geteilt-Aufgaben gehen immer ohne Rest auf.' : '') + '</p>';
   if (E.mode === 'mix') h += '<fieldset><legend>Rechenarten in der Mischung</legend><div class="chips">' + MODES.mix.ops.map(o => chipBtn(E.useOp[o] !== false, 'euse', 'data-op="' + o + '"', OPLABEL[o], 'eu' + o)).join('') + '</div></fieldset>';
   if (ops.length > 1) h += '<fieldset><legend>Einstellen für</legend><div class="chips">' + ops.map(o => chipBtn(o === tab, 'etab', 'data-op="' + o + '"', OPLABEL[o], 'et' + o)).join('') + '</div></fieldset>';
   return h + '<div class="specbox">' + operandHtml(tab, 'a') + operandHtml(tab, 'b') + '</div>';
@@ -1333,7 +1353,7 @@ async function savePack() {
   if (E.err || !E.tasks.length) { toast('Bitte zuerst die Einstellungen anpassen.'); return; }
   const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6).replace(/[^a-z0-9]/g, 'x');
   const d = new Date(), title = E.title.trim() || ('Päckchen vom ' + d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }));
-  const doc = { id, title: title.slice(0, 40), mode: E.mode, range_max: E.adv ? rangeFor(E.tasks) : E.range, rounded: E.adv ? false : E.rounded, limit_min: E.limit, archived: false, tasks: E.tasks.map(t => ({ op: t.op, a: t.a, b: t.b, answer: t.answer })) };
+  const doc = { id, title: title.slice(0, 40), mode: E.mode, range_max: E.adv && E.free ? rangeFor(E.tasks) : E.range, rounded: E.adv ? false : E.rounded, limit_min: E.limit, archived: false, tasks: E.tasks.map(t => ({ op: t.op, a: t.a, b: t.b, answer: t.answer })) };
   if (E.adv) doc.spec = buildSpec();
   const ok = await dbWrite(() => sb.from('packs').insert(doc));
   if (!ok) { toast('Das Päckchen konnte nicht gespeichert werden.'); return; }
@@ -1663,13 +1683,14 @@ document.addEventListener('click', async e => {
     case 'newpack': E.open = true; newPreview(); renderEditor(); { const t = $('#t-editor'); if (t) t.scrollIntoView({ block: 'nearest' }); } break;
     case 'cancelpack': E.open = false; renderEditor(); break;
     case 'emode': E.mode = d.m; E.tab = activeOps()[0]; newPreview(); renderEditor(); break;
-    case 'eadv': E.adv = d.v === 'on'; newPreview(); renderEditor(); break;
+    case 'eadv': E.adv = d.v === 'on'; if (E.adv) fitSpecToRange(); newPreview(); renderEditor(); break;
+    case 'efree': E.free = true; newPreview(); renderEditor(); break;
     case 'euse': if (E.useOp[d.op] !== false && activeOps().length === 1) { toast('Mindestens eine Rechenart bleibt ausgewählt.'); break; } E.useOp[d.op] = E.useOp[d.op] === false; E.tab = curTab(); newPreview(); renderEditor(); break;
     case 'etab': E.tab = d.op; renderEditor(); break;
     case 'snp': { const Q = specFor(d.op)[d.w], n = +d.n; while (Q.length < n) Q.push(ALL_D); Q.length = n; newPreview(); renderEditor(); break; }
     case 'sdig': { const Q = specFor(d.op)[d.w], i = +d.i; Q[i] = effMask(Q, i) ^ bit(+d.d); newPreview(); renderEditor(); break; }
     case 'sq': { const Q = specFor(d.op)[d.w], i = +d.i; Q[i] = d.q === 'zero' ? 1 : d.q === 'nz' ? 1022 : ALL_D; newPreview(); renderEditor(); break; }
-    case 'erange': E.range = +d.r; newPreview(); renderEditor(); break;
+    case 'erange': E.range = +d.r; E.free = false; fitSpecToRange(); newPreview(); renderEditor(); break;
     case 'eround': E.rounded = d.v === 'on'; newPreview(); renderEditor(); break;
     case 'reroll': newPreview(); renderEditor(); break;
     case 'savepack': await savePack(); break;
