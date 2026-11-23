@@ -275,6 +275,9 @@ del { color: var(--bad); text-decoration-thickness: 3px; }
 .pack .phead { display: flex; gap: 12px 20px; justify-content: space-between; flex-wrap: wrap; align-items: flex-start; }
 .pack h3 { font-size: 1.35rem; }
 .pack .pbtns { display: flex; gap: 8px; flex-wrap: wrap; }
+.perday { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding-top: 10px; border-top: 1px dashed var(--grid-strong); }
+.perday label { font-weight: 700; }
+.perday select.field { width: auto; min-width: 9.5rem; }
 .qrbox { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center; border-top: 1.5px dashed var(--grid-strong); padding-top: 14px; }
 .qrbox .code { width: 184px; height: 184px; background: #fff; border: 1.5px solid var(--grid-strong); border-radius: 6px; padding: 4px; display: grid; place-items: center; }
 .qrbox .code svg { width: 100%; height: 100%; display: block; }
@@ -441,6 +444,10 @@ const MODES = {
 };
 const MODE_KEYS = ['add', 'sub', 'mul', 'div', 'mix'];
 const LIMITS = [0, 1, 2, 3, 5, 10, 15, 20, 30, 45, 60];
+const PERDAY = [0, 1, 2, 3, 4, 5, 10];
+const perDayLabel = n => n ? n + (n === 1 ? ' Versuch' : ' Versuche') : 'Unbegrenzt';
+const perDayOptions = cur => (PERDAY.includes(cur) ? PERDAY : [...PERDAY, cur].sort((x, y) => x - y)).map(n => '<option value="' + n + '"' + (cur === n ? ' selected' : '') + '>' + perDayLabel(n) + '</option>').join('');
+const berlinDay = ts => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin' }).format(ts); // JJJJ-MM-TT, wie in der Datenbank
 const MAX_TASKS = 60;
 
 const $ = (s, r) => (r || document).querySelector(s);
@@ -670,7 +677,7 @@ function normPack(d) {
   if (!tasks.length) return null;
   return {
     id: String(d.id), title: String(d.title || 'Päckchen').slice(0, 40), mode: MODES[d.mode] ? d.mode : 'mix', range: RANGES.includes(+d.range_max) ? +d.range_max : 100,
-    rounded: !!d.rounded, spec: sanitizeSpec(d.spec), limitMin: Math.max(0, Math.min(180, Math.round(+d.limit_min || 0))), archived: !!d.archived, createdAt: tsOf(d.created_at), tasks
+    rounded: !!d.rounded, spec: sanitizeSpec(d.spec), maxPerDay: Number.isInteger(d.max_per_day) && d.max_per_day >= 1 ? d.max_per_day : 0, limitMin: Math.max(0, Math.min(180, Math.round(+d.limit_min || 0))), archived: !!d.archived, createdAt: tsOf(d.created_at), tasks
   };
 }
 function normSession(d) {
@@ -879,7 +886,7 @@ function renderStart() {
 const K = {
   gate: 'loading', screen: 'pick', pack: null, kid: null, history: [], histState: 'idle', tasks: [], idx: 0, input: '', phase: 'ask',
   results: [], shownAt: 0, startedAt: 0, limitMs: 0, session: null, q: null, saveState: 'idle',
-  fbTimer: null, clockTimer: null, praise: 0, prev: null, cur: null
+  fbTimer: null, clockTimer: null, praise: 0, prev: null, cur: null, today: null
 };
 function resetKid() {
   clearTimeout(K.fbTimer); stopClock();
@@ -939,9 +946,18 @@ function pickHtml() {
   return '<section class="kid"><div class="notice" id="notice" role="status" hidden></div><span class="packname">' + esc(K.pack.title) + '</span><h1 class="h">Wer rechnet?</h1><p class="lead">Tippe auf deinen Namen.</p><div id="kidlist">' + kidListHtml() + '</div></section>';
 }
 function packMeta(p) {
-  return MODES[p.mode].label + ' · ' + (p.spec ? specLabel(p.spec) + (p.spec.max ? ' · ' + rangeLabel(p.spec.max) : '') : rangeLabel(p.range)) + ' · ' + p.tasks.length + ' Aufgaben · ' + (p.limitMin ? p.limitMin + ' Min.' : 'ohne Zeitlimit');
+  return MODES[p.mode].label + ' · ' + (p.spec ? specLabel(p.spec) + (p.spec.max ? ' · ' + rangeLabel(p.spec.max) : '') : rangeLabel(p.range)) + (p.maxPerDay ? ' · ' + perDayLabel(p.maxPerDay) + ' pro Tag' : '') + ' · ' + p.tasks.length + ' Aufgaben · ' + (p.limitMin ? p.limitMin + ' Min.' : 'ohne Zeitlimit');
 }
 const bestOf = h => h.slice().sort((a, b) => pctOf(b) - pctOf(a) || elapsedOf(a) - elapsedOf(b))[0];
+// Tageslimit: Werte stammen frisch aus der Datenbank (kid_today). Ist der Abruf gescheitert, sperrt die App nicht.
+const dayInfo = () => ({ max: K.today ? K.today.max : 0, used: K.today ? K.today.used : 0, known: !!K.today });
+const dayLimitReached = () => { const d = dayInfo(); return d.known && d.max > 0 && d.used >= d.max; };
+function dayLimitHit() { // die Datenbank hat den Versuch abgelehnt: das Limit war (z. B. auf einem anderen Gerät) schon erreicht
+  clearTimeout(K.fbTimer); stopClock();
+  const max = K.today && K.today.max ? K.today.max : (K.pack && K.pack.maxPerDay) || 1;
+  K.today = { used: max, max }; K.session = null; K.q = null; K.screen = 'ready';
+  renderKid(); $('#app').focus({ preventScroll: true });
+}
 function readyHtml() {
   const p = K.pack, h = K.history, n = h.length;
   let info = '';
@@ -949,26 +965,38 @@ function readyHtml() {
   else if (K.histState === 'failed') info = '<div class="panel hint"><p class="muted">Dein Verlauf lässt sich gerade nicht laden. Du kannst trotzdem rechnen.</p></div>';
   else if (n) {
     const last = h[n - 1], best = bestOf(h);
-    info = '<div class="panel hint"><p>Das wird dein <b>Versuch ' + (n + 1) + '</b>.</p><p class="muted num">Letzter Versuch: ' + correctOf(last) + ' von ' + totalOf(last) + ' richtig in ' + fmtDur(elapsedOf(last)) + '.<br>Dein bestes Ergebnis: ' + correctOf(best) + ' von ' + totalOf(best) + ' richtig in ' + fmtDur(elapsedOf(best)) + '.</p></div>';
+    info = '<div class="panel hint">' + (dayLimitReached() ? '' : '<p>Das wird dein <b>Versuch ' + (n + 1) + '</b>.</p>') + '<p class="muted num">Letzter Versuch: ' + correctOf(last) + ' von ' + totalOf(last) + ' richtig in ' + fmtDur(elapsedOf(last)) + '.<br>Dein bestes Ergebnis: ' + correctOf(best) + ' von ' + totalOf(best) + ' richtig in ' + fmtDur(elapsedOf(best)) + '.</p></div>';
+  }
+  const di = dayInfo(); let dayHtml = '', canStart = true;
+  if (K.histState !== 'loading' && di.max && di.known) {
+    if (di.used >= di.max) {
+      canStart = false;
+      dayHtml = '<div class="panel hint" id="daydone"><p><b>Für heute sind alle ' + di.max + (di.max === 1 ? ' Versuch' : ' Versuche') + ' gemacht.</b></p><p class="muted">Morgen geht es weiter.</p></div>';
+    } else dayHtml = '<p class="muted num" id="dayleft">Heute noch ' + (di.max - di.used) + (di.max - di.used === 1 ? ' Versuch' : ' Versuche') + ' (von ' + di.max + ').</p>';
   }
   const lim = p.limitMin ? 'Du hast ' + p.limitMin + (p.limitMin === 1 ? ' Minute' : ' Minuten') + ' Zeit. Dann hört die App von selbst auf.' : 'Die Uhr läuft mit. Nimm dir so viel Zeit, wie du brauchst.';
   return '<section class="kid"><div class="notice" id="notice" role="status" hidden></div><span class="packname">' + esc(p.title) + '</span><h1 class="h">Hallo ' + esc(K.kid.name) + '!</h1>' +
-    '<p class="lead num">' + p.tasks.length + ' Aufgaben' + (p.spec ? (p.spec.max ? ', ' + esc(rangeLabel(p.spec.max)) : '') : ', ' + esc(rangeLabel(p.range))) + '. ' + lim + '</p>' + info +
-    '<button class="btn primary big" data-act="start" ' + (K.histState === 'loading' ? 'disabled' : '') + '>' + (n ? 'Versuch ' + (n + 1) + ' starten' : 'Los geht\'s') + '</button></section>';
+    '<p class="lead num">' + p.tasks.length + ' Aufgaben' + (p.spec ? (p.spec.max ? ', ' + esc(rangeLabel(p.spec.max)) : '') : ', ' + esc(rangeLabel(p.range))) + '. ' + lim + '</p>' + info + dayHtml +
+    (canStart ? '<button class="btn primary big" data-act="start" ' + (K.histState === 'loading' ? 'disabled' : '') + '>' + (n ? 'Versuch ' + (n + 1) + ' starten' : 'Los geht\'s') + '</button>' : '<button class="btn big" data-act="finish">Fertig</button>') + '</section>';
 }
 async function fetchHistory() {
   const kid = K.kid, pack = K.pack;
-  K.history = []; K.histState = 'idle';
+  K.history = []; K.histState = 'idle'; K.today = null;
   if (!sb || dbStatus !== 'ready' || !kid || !pack) return;
   K.histState = 'loading';
-  let list = [], failed = false;
+  let list = [], failed = false, today = null;
   try {
     const r = await sb.rpc('kid_history', { p_kid: kid.id, p_pack: pack.id });
     if (r.error) throw r.error;
     list = (r.data || []).map(normSession).filter(x => x && x.done && x.tasks.length).sort((a, b) => a.startedAt - b.startedAt);
   } catch (e) { failed = true; }
+  try { // Versuche von heute und Tageslimit. Schlägt das fehl, wird nicht gesperrt (die Datenbank prüft beim Speichern ohnehin).
+    const r = await sb.rpc('kid_today', { p_kid: kid.id, p_pack: pack.id });
+    const row = !r.error && Array.isArray(r.data) ? r.data[0] : null;
+    if (row) today = { used: Math.max(0, +row.used || 0), max: Number.isInteger(row.max_per_day) && row.max_per_day >= 1 ? row.max_per_day : 0 };
+  } catch (e) { today = null; }
   if (K.kid !== kid) return;
-  K.history = list; K.histState = failed ? 'failed' : 'ready';
+  K.history = list; K.histState = failed ? 'failed' : 'ready'; K.today = today;
   if (mode === 'kind' && K.screen === 'ready') renderKid();
 }
 
@@ -1104,9 +1132,12 @@ function resultHtml() {
   return '<section class="kid"><div class="notice" id="notice" role="status" hidden></div><h1 class="h">' + esc(msg) + '</h1>' +
     '<p class="score num">' + c + ' <small>von ' + tot + ' richtig</small></p>' +
     '<p class="muted num">Zeit ' + fmtDur(elapsedOf(s)) + (missed ? ' · ' + missed + (missed === 1 ? ' Aufgabe' : ' Aufgaben') + ' nicht mehr geschafft' : '') + '</p>' +
+    (dayLimitReached() ? '<div class="panel hint" id="daydone"><p><b>Das war dein letzter Versuch für heute.</b></p><p class="muted">Morgen geht es weiter.</p></div>' : '') +
     compareHtml() + '<div class="panel"><b>Dein Verlauf</b>' + histBars(K.history, s) + '</div>' +
     '<div class="panel page"><ul>' + li + '</ul></div>' +
-    '<div class="actions-row"><button class="btn primary big" data-act="again">Nochmal üben</button><button class="btn big" data-act="finish">Fertig</button></div></section>';
+    (dayLimitReached()
+      ? '<div class="actions-row"><button class="btn primary big" data-act="finish">Fertig</button></div>'
+      : '<div class="actions-row"><button class="btn primary big" data-act="again">Nochmal üben</button><button class="btn big" data-act="finish">Fertig</button></div>' + (dayInfo().max && dayInfo().known ? '<p class="muted num" id="dayleft">Heute noch ' + (dayInfo().max - dayInfo().used) + (dayInfo().max - dayInfo().used === 1 ? ' Versuch' : ' Versuche') + ' (von ' + dayInfo().max + ').</p>' : '')) + '</section>';
 }
 function startRound() {
   const p = K.pack, now = Date.now();
@@ -1128,6 +1159,7 @@ function finishAttempt(timedOut) {
   K.prev = K.history.length ? K.history[K.history.length - 1] : null;
   K.cur = { id: 'lokal', kidId: s.kidId, packId: s.packId, startedAt: s.startedAt, updatedAt: s.updatedAt, total: s.total, done: s.done, timedOut: s.timedOut, elapsedMs: s.elapsedMs, limitMin: s.limitMin, tasks: s.tasks.map(t => Object.assign({}, t)) };
   K.history.push(K.cur);
+  if (K.today && s.tasks.length) K.today.used++;
 }
 function timeUp() {
   if (K.screen !== 'play' || !K.session || K.session.done) return;
@@ -1150,6 +1182,7 @@ async function runSave(q) {
       p_done: s.done, p_timed_out: s.timedOut, p_elapsed: Math.round(s.elapsedMs), p_limit: s.limitMin,
       p_tasks: s.tasks.map(t => ({ op: t.op, a: t.a, b: t.b, answer: t.answer, given: t.given, ms: t.ms }))
     }));
+    if (!r.ok && r.fatal && r.error && r.error.message === 'tageslimit') { if (q === K.q) dayLimitHit(); break; }
     if (q === K.q) { K.saveState = r.ok ? 'ok' : 'err'; if (r.ok) store.net = 'ok'; }
     updateConn();
     if (!r.ok && !q.dirty) {
@@ -1186,7 +1219,7 @@ async function chooseKid(kid) {
 
 /* ---------- Lehrer-Ansicht ---------- */
 const T = { pack: 'auto', kid: 'all', range: 'all', open: new Set(), armed: null, qrOpen: null, archOpen: false };
-const E = { open: false, title: '', mode: 'mix', range: 100, rounded: true, count: 10, limit: 5, tasks: [], adv: false, free: false, spec: {}, useOp: {}, tab: '+', err: '' };
+const E = { open: false, title: '', mode: 'mix', range: 100, rounded: true, count: 10, limit: 5, tasks: [], perDay: 0, adv: false, free: false, spec: {}, useOp: {}, tab: '+', err: '' };
 
 /* Anmeldung der Lehrkraft */
 const A = { state: 'loading', email: '', draftMail: '', error: '', busy: false };
@@ -1342,7 +1375,9 @@ function renderEditor() {
     '<fieldset><legend>Rechenart</legend><div class="chips">' + MODE_KEYS.map(m => chip(E.mode === m, 'emode', 'data-m="' + m + '"', MODES[m].label, 'em' + m)).join('') + '</div></fieldset>' +
     specHtml() +
     '<div class="row2"><div><label class="flabel" for="e-count">Anzahl der Aufgaben (1 bis ' + MAX_TASKS + ')</label><input type="number" id="e-count" min="1" max="' + MAX_TASKS + '" step="1" inputmode="numeric" value="' + E.count + '"></div>' +
-    '<div><label class="flabel" for="e-limit">Zeitlimit</label><select class="field" id="e-limit">' + LIMITS.map(l => '<option value="' + l + '"' + (E.limit === l ? ' selected' : '') + '>' + (l ? l + (l === 1 ? ' Minute' : ' Minuten') : 'Kein Zeitlimit') + '</option>').join('') + '</select></div></div></div>' +
+    '<div><label class="flabel" for="e-limit">Zeitlimit</label><select class="field" id="e-limit">' + LIMITS.map(l => '<option value="' + l + '"' + (E.limit === l ? ' selected' : '') + '>' + (l ? l + (l === 1 ? ' Minute' : ' Minuten') : 'Kein Zeitlimit') + '</option>').join('') + '</select></div></div>' +
+    '<div class="row2"><div><label class="flabel" for="e-perday">Versuche pro Tag und Kind</label><select class="field" id="e-perday">' + perDayOptions(E.perDay) + '</select></div>' +
+    '<p class="muted" style="align-self:end;margin:0 0 10px">Ein Versuch zählt ab der ersten beantworteten Aufgabe. Du kannst das später jederzeit ändern, ohne dass Versuche gelöscht werden.</p></div></div>' +
     '<h3>Vorschau</h3>' + errNote + dupNote + (E.tasks.length ? '<ul class="prev num" aria-label="Aufgaben im Päckchen">' + E.tasks.map(t => '<li>' + esc(exprText(t)) + ' = ' + esc(fmtN(t.answer)) + '</li>').join('') + '</ul>' : '') +
     '<p class="muted" style="margin-bottom:14px">Alle Kinder rechnen genau diese Aufgaben. Die Reihenfolge mischt sich bei jedem Versuch.</p>' +
     '<div class="actions-row"><button class="btn primary" data-act="savepack"' + (E.err || !E.tasks.length ? ' disabled' : '') + '>Päckchen speichern</button><button class="btn" data-act="reroll">Neu würfeln</button><button class="btn" data-act="cancelpack">Abbrechen</button></div>';
@@ -1355,6 +1390,7 @@ async function savePack() {
   const d = new Date(), title = E.title.trim() || ('Päckchen vom ' + d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }));
   const doc = { id, title: title.slice(0, 40), mode: E.mode, range_max: E.adv && E.free ? rangeFor(E.tasks) : E.range, rounded: E.adv ? false : E.rounded, limit_min: E.limit, archived: false, tasks: E.tasks.map(t => ({ op: t.op, a: t.a, b: t.b, answer: t.answer })) };
   if (E.adv) doc.spec = buildSpec();
+  if (E.perDay) doc.max_per_day = E.perDay;
   const ok = await dbWrite(() => sb.from('packs').insert(doc));
   if (!ok) { toast('Das Päckchen konnte nicht gespeichert werden.'); return; }
   E.open = false; E.title = ''; T.pack = id; T.qrOpen = id;
@@ -1369,13 +1405,23 @@ function packCard(p) {
   const sess = store.sessions.filter(s => s.packId === p.id && s.done && s.tasks.length);
   const kids = new Set(sess.map(s => s.kidId)).size, open = T.qrOpen === p.id, url = linkFor(p.id);
   const armed = T.armed && T.armed.id === 'pack-' + p.id && Date.now() < T.armed.until;
+  const day = berlinDay(Date.now()), today = store.sessions.filter(s => s.packId === p.id && s.tasks.length >= 1 && berlinDay(s.startedAt) === day).length;
   return '<article class="pack' + (p.archived ? ' arch' : '') + '"><div class="phead"><div><h3>' + esc(p.title) + (p.archived ? ' <span class="pill">beendet</span>' : '') + '</h3>' +
     '<p class="muted">' + esc(packMeta(p)) + '</p><p class="muted num">angelegt ' + esc(when(p.createdAt)) + ' · ' + kids + (kids === 1 ? ' Kind' : ' Kinder') + ' · ' + sess.length + (sess.length === 1 ? ' Versuch' : ' Versuche') + '</p></div>' +
     '<div class="pbtns">' + (p.archived ? '' : '<button class="btn small" data-act="packqr" data-id="' + pid + '" aria-expanded="' + open + '">' + (open ? 'QR-Code verbergen' : 'QR-Code zeigen') + '</button>') +
     '<button class="btn small" data-act="packsel" data-id="' + pid + '">Auswerten</button>' +
     '<button class="btn small" data-act="packarch" data-id="' + pid + '">' + (p.archived ? 'Wieder öffnen' : 'Beenden') + '</button>' +
     '<button class="btn small danger' + (armed ? ' armed' : '') + '" data-act="delpack" data-id="' + pid + '">' + (armed ? 'Wirklich löschen? Nochmal tippen' : 'Löschen') + '</button></div></div>' +
+    (p.archived ? '' : '<div class="perday"><label for="pd-' + pid + '">Versuche pro Tag</label><select class="field" id="pd-' + pid + '" data-perday="' + pid + '">' + perDayOptions(p.maxPerDay) + '</select>' +
+      '<span class="muted">Heute bisher ' + today + (today === 1 ? ' Versuch' : ' Versuche') + '. Ändern löscht nichts: Alle Versuche bleiben gespeichert und zählen für heute mit.</span></div>') +
     (open && !p.archived ? qrBlock(pid, url, 'Diesen QR-Code scannen. Die Kinder rechnen dann direkt dieses Päckchen.') : '') + '</article>';
+}
+async function setPerDay(id, n) {
+  const p = store.packs.get(id); if (!p) return;
+  const ok = await dbWrite(() => sb.from('packs').update({ max_per_day: n || null }).eq('id', id));
+  if (ok) { p.maxPerDay = n; toast(n ? 'Ab jetzt ' + perDayLabel(n) + ' pro Tag. Bisherige Versuche bleiben gespeichert.' : 'Keine Begrenzung mehr. Bisherige Versuche bleiben gespeichert.'); }
+  else toast('Das konnte nicht gespeichert werden.');
+  renderPacks();
 }
 function qrBlock(id, url, text) { // id ist bereits maskiert
   if (!url) return '<div class="notice err">Der Link dieser Seite ist nicht bekannt.</div>';
@@ -1672,7 +1718,7 @@ document.addEventListener('click', async e => {
     case 'pick': { const k = store.kids.get(d.id); if (k) chooseKid(k); break; }
     case 'logout': await logout(); break;
     case 'switch': K.screen = 'pick'; K.kid = null; clearTimeout(K.fbTimer); stopClock(); renderKid(); break;
-    case 'start': case 'again': if (K.kid && K.pack) startRound(); break;
+    case 'start': case 'again': if (K.kid && K.pack && !dayLimitReached()) startRound(); break;
     case 'finish': K.screen = 'pick'; K.kid = null; K.history = []; renderKid(); break;
     case 'digit': if (canType()) { K.input = K.input === '0' ? d.v : K.input + d.v; updateAns(); } break;
     case 'del': if (K.phase === 'ask') { K.input = K.input.slice(0, -1); updateAns(); } break;
@@ -1736,6 +1782,8 @@ document.addEventListener('change', e => {
   const t = e.target;
   if (t.id === 'e-count') { E.count = Math.max(1, Math.min(MAX_TASKS, Math.round(+t.value || 10))); newPreview(); renderEditor(); }
   else if (t.id === 'e-limit') E.limit = +t.value || 0;
+  else if (t.id === 'e-perday') E.perDay = +t.value || 0;
+  else if (t.dataset && t.dataset.perday) setPerDay(t.dataset.perday, +t.value || 0);
   else if (t.id === 'f-pack') { T.pack = t.value; T.kid = 'all'; renderFilters(); renderLive(); }
   else if (t.id === 'f-kid') { T.kid = t.value; renderLive(); }
 });

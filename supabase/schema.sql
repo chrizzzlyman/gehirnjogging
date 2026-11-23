@@ -39,6 +39,10 @@ create table if not exists public.packs (
 alter table public.packs add column if not exists spec jsonb
   check (spec is null or (jsonb_typeof(spec) = 'object' and octet_length(spec::text) < 4000));
 
+-- Versuche pro Tag und Kind für dieses Päckchen. Leer = unbegrenzt. Die Einstellung löscht nie Versuche.
+alter table public.packs add column if not exists max_per_day integer
+  check (max_per_day is null or max_per_day between 1 and 50);
+
 create table if not exists public.sessions (
   id uuid primary key,
   kid_id uuid not null references public.kids (id) on delete cascade,
@@ -104,6 +108,9 @@ language plpgsql
 security definer
 set search_path = public, pg_temp
 as $$
+declare
+  v_max integer;
+  v_used integer;
 begin
   if p_tasks is null or jsonb_typeof(p_tasks) <> 'array' or jsonb_array_length(p_tasks) > 100
      or octet_length(p_tasks::text) >= 40000 then
@@ -114,6 +121,22 @@ begin
   end if;
   if not exists (select 1 from public.packs where id = p_pack) then
     raise exception 'unbekanntes Paeckchen' using errcode = '22023';
+  end if;
+
+  -- Tageslimit (Zeitzone Deutschland): Ein Versuch zählt ab der ersten beantworteten Aufgabe.
+  -- Nur der Übergang "noch nicht gezählt" -> "gezählt" wird geprüft. Ein Versuch, der schon läuft, wird immer
+  -- weitergespeichert, auch wenn das Limit zwischendurch gesenkt wird. Bereits gespeicherte Versuche werden nie verändert.
+  if jsonb_array_length(p_tasks) >= 1 then
+    select max_per_day into v_max from public.packs where id = p_pack;
+    if v_max is not null
+       and not exists (select 1 from public.sessions where id = p_id and jsonb_array_length(tasks) >= 1) then
+      select count(*) into v_used from public.sessions s
+       where s.kid_id = p_kid and s.pack_id = p_pack and s.id <> p_id and jsonb_array_length(s.tasks) >= 1
+         and (s.started_at at time zone 'Europe/Berlin')::date = (now() at time zone 'Europe/Berlin')::date;
+      if v_used >= v_max then
+        raise exception 'tageslimit' using errcode = 'P0001';
+      end if;
+    end if;
   end if;
 
   insert into public.sessions
@@ -152,6 +175,22 @@ $$;
 -- Nur diese beiden Funktionen dürfen die Kinder (ohne Anmeldung) aufrufen.
 -- Die Sicherheitswarnungen von Supabase dazu sind gewollt.
 revoke all on function public.save_session(uuid, uuid, text, timestamptz, integer, boolean, boolean, integer, integer, jsonb) from public, anon, authenticated;
+-- Wie viele Versuche hat das Kind heute schon, und wie viele sind erlaubt? (Zeitzone Deutschland)
+create or replace function public.kid_today(p_kid uuid, p_pack text)
+returns table (used integer, max_per_day integer)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select
+    (select count(*)::integer from public.sessions s
+      where s.kid_id = p_kid and s.pack_id = p_pack and jsonb_array_length(s.tasks) >= 1
+        and (s.started_at at time zone 'Europe/Berlin')::date = (now() at time zone 'Europe/Berlin')::date),
+    (select p.max_per_day from public.packs p where p.id = p_pack);
+$$;
+revoke all on function public.kid_today(uuid, text) from public, anon, authenticated;
+grant execute on function public.kid_today(uuid, text) to anon, authenticated;
 revoke all on function public.kid_history(uuid, text) from public, anon, authenticated;
 revoke all on function public.is_teacher() from public, anon, authenticated;
 revoke all on function public.claim_first_teacher() from public, anon, authenticated;
